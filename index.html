@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Canvas - Museum Art on Your Screen, Every Day</title>
-    <meta name="description" content="Turn every glance at your device into a moment of art discovery. Daily Canvas delivers museum-quality art to your iPhone, Mac, Apple Watch, and Apple TV.">
-    <meta name="theme-color" content="#1a1a1a">
+    <title>Daily Canvas — A Masterpiece, Every Morning</title>
+    <meta name="description" content="Museum-quality art curated to your taste, delivered to your iPhone, Mac, Apple Watch, and Apple TV every day. From the Met, Rijksmuseum, and more.">
+    <meta name="theme-color" content="#0A0A0A">
+    <meta property="og:title" content="Daily Canvas — A Masterpiece, Every Morning">
+    <meta property="og:description" content="Museum-quality art curated to your taste, delivered daily.">
+    <meta property="og:type" content="website">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --gold: #C8A951;
-            --gold-light: #E8D48B;
-            --bg: #111111;
-            --bg-card: #1A1A1A;
-            --bg-elevated: #222222;
-            --text-primary: #F5F0E8;
-            --text-secondary: #A09888;
-            --text-tertiary: #6B6050;
-            --serif: 'Playfair Display', Georgia, serif;
+            --gold: #C9A84C;
+            --gold-dim: #8A6F2E;
+            --bg: #0A0A0A;
+            --bg-card: #111111;
+            --bg-elevated: #1A1A1A;
+            --border: #252525;
+            --text-primary: #F5F5F5;
+            --text-secondary: #888888;
+            --text-tertiary: #4A4A4A;
+            --serif: 'Cormorant Garamond', Georgia, serif;
             --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
@@ -33,23 +37,26 @@
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        /* Navigation */
+        /* ─── NAV ─────────────────────────────────────────────── */
         nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 100;
-            padding: 1rem 2rem;
-            background: rgba(17, 17, 17, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(200, 169, 81, 0.1);
+            padding: 1.25rem 2rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            transition: background 0.4s, border-color 0.4s;
+        }
+
+        nav.scrolled {
+            background: rgba(10, 10, 10, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
         }
 
         .nav-logo {
@@ -58,454 +65,796 @@
             font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
-            letter-spacing: -0.02em;
+            letter-spacing: 0.01em;
         }
 
-        .nav-logo span { color: var(--gold); }
+        .nav-logo em {
+            font-style: normal;
+            color: var(--gold);
+        }
 
-        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
 
         .nav-links a {
             color: var(--text-secondary);
             text-decoration: none;
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
             font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
             transition: color 0.2s;
         }
 
         .nav-links a:hover { color: var(--text-primary); }
 
-        .btn-download {
+        .btn-app-store {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             padding: 0.625rem 1.25rem;
-            background: var(--gold);
-            color: #111;
-            font-size: 0.875rem;
+            background: var(--text-primary);
+            color: var(--bg);
+            font-size: 0.8125rem;
             font-weight: 600;
-            border-radius: 100px;
+            border-radius: 8px;
             text-decoration: none;
-            transition: all 0.25s;
-            border: none;
-            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            letter-spacing: 0.01em;
         }
 
-        .btn-download:hover {
-            background: var(--gold-light);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(200, 169, 81, 0.3);
-        }
+        .btn-app-store:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-app-store svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-        .btn-download svg { width: 18px; height: 18px; }
-
-        /* Hero */
+        /* ─── HERO ────────────────────────────────────────────── */
         .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 8rem 2rem 4rem;
             position: relative;
+            height: 100vh;
+            min-height: 600px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
         }
 
-        .hero::before {
-            content: '';
+        .hero-painting {
             position: absolute;
             inset: 0;
-            background:
-                radial-gradient(ellipse 80% 60% at 50% 40%, rgba(200, 169, 81, 0.06) 0%, transparent 70%),
-                radial-gradient(ellipse 60% 40% at 30% 60%, rgba(139, 69, 19, 0.04) 0%, transparent 60%);
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg/1024px-The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg');
+            background-size: cover;
+            background-position: center 20%;
+            transform: scale(1.04);
+            animation: slow-zoom 20s ease-out forwards;
+        }
+
+        @keyframes slow-zoom {
+            from { transform: scale(1.04); }
+            to   { transform: scale(1.0); }
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(10,10,10,0.1) 0%,
+                rgba(10,10,10,0.15) 40%,
+                rgba(10,10,10,0.65) 65%,
+                rgba(10,10,10,0.95) 85%,
+                rgba(10,10,10,1.0) 100%
+            );
         }
 
         .hero-content {
             position: relative;
-            max-width: 800px;
+            z-index: 2;
+            padding: 0 2rem 5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .hero-overline {
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--gold);
-            margin-bottom: 1.5rem;
-        }
-
-        .hero h1 {
-            font-family: var(--serif);
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            letter-spacing: -0.02em;
-        }
-
-        .hero h1 em {
-            font-style: italic;
-            color: var(--gold);
-        }
-
-        .hero-subtitle {
-            font-size: 1.125rem;
-            color: var(--text-secondary);
-            max-width: 540px;
-            margin: 0 auto 2.5rem;
-            line-height: 1.7;
-        }
-
-        .hero-ctas {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.25rem;
-            background: transparent;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 100px;
-            text-decoration: none;
-            border: 1px solid rgba(245, 240, 232, 0.15);
-            transition: all 0.25s;
-        }
-
-        .btn-secondary:hover {
-            border-color: rgba(245, 240, 232, 0.3);
-            background: rgba(245, 240, 232, 0.05);
-        }
-
-        .hero-price {
-            margin-top: 1.5rem;
-            font-size: 0.8125rem;
-            color: var(--text-tertiary);
-        }
-
-        /* Painting Strip */
-        .painting-strip {
-            padding: 0;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .painting-strip::before,
-        .painting-strip::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 120px;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        .painting-strip::before {
-            left: 0;
-            background: linear-gradient(to right, var(--bg), transparent);
-        }
-
-        .painting-strip::after {
-            right: 0;
-            background: linear-gradient(to left, var(--bg), transparent);
-        }
-
-        .painting-track {
-            display: flex;
-            gap: 1rem;
-            animation: scroll 60s linear infinite;
-            width: max-content;
-        }
-
-        .painting-track img {
-            height: 280px;
-            border-radius: 8px;
-            object-fit: cover;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-
-        .painting-track img:hover { opacity: 1; }
-
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        /* Sections */
-        section {
-            padding: 6rem 2rem;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .section-label {
             font-size: 0.6875rem;
             font-weight: 600;
-            letter-spacing: 0.2em;
+            letter-spacing: 0.25em;
             text-transform: uppercase;
             color: var(--gold);
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            font-family: var(--serif);
-            font-size: clamp(1.75rem, 4vw, 2.75rem);
-            font-weight: 600;
-            line-height: 1.2;
-            margin-bottom: 1rem;
-            letter-spacing: -0.01em;
-        }
-
-        .section-subtitle {
-            font-size: 1.0625rem;
-            color: var(--text-secondary);
-            max-width: 560px;
-            line-height: 1.7;
-            margin-bottom: 3rem;
-        }
-
-        /* Features */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(245, 240, 232, 0.06);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: border-color 0.3s, transform 0.3s;
-        }
-
-        .feature-card:hover {
-            border-color: rgba(200, 169, 81, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: rgba(200, 169, 81, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             margin-bottom: 1.25rem;
-            font-size: 1.25rem;
-        }
-
-        .feature-card h3 {
-            font-family: var(--serif);
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .feature-card p {
-            font-size: 0.9375rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* Platforms */
-        .platforms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
-        }
-
-        .platform-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(245, 240, 232, 0.06);
-            border-radius: 16px;
-            padding: 2rem 1.5rem;
-            text-align: center;
-            transition: border-color 0.3s;
-        }
-
-        .platform-card:hover {
-            border-color: rgba(200, 169, 81, 0.2);
-        }
-
-        .platform-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .platform-card h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.375rem;
-        }
-
-        .platform-card p {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        /* How it Works */
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 2rem;
-            counter-reset: step;
-        }
-
-        .step {
-            counter-increment: step;
-            position: relative;
-            padding-left: 0;
-        }
-
-        .step::before {
-            content: counter(step);
-            font-family: var(--serif);
-            font-size: 3rem;
-            font-weight: 700;
-            color: rgba(200, 169, 81, 0.15);
-            line-height: 1;
-            margin-bottom: 0.75rem;
-            display: block;
-        }
-
-        .step h3 {
-            font-size: 1.0625rem;
-            font-weight: 600;
-            margin-bottom: 0.375rem;
-        }
-
-        .step p {
-            font-size: 0.9375rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* Sources */
-        .sources {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        .source-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.25rem;
-            background: var(--bg-card);
-            border: 1px solid rgba(245, 240, 232, 0.06);
-            border-radius: 100px;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .source-badge strong {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        /* Pricing */
-        .pricing-card {
-            max-width: 480px;
-            margin: 0 auto;
-            background: var(--bg-card);
-            border: 1px solid rgba(200, 169, 81, 0.2);
-            border-radius: 20px;
-            padding: 3rem;
-            text-align: center;
-        }
-
-        .pricing-card .price {
-            font-family: var(--serif);
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--gold);
-        }
-
-        .pricing-card .price-period {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .pricing-card .price-alt {
-            font-size: 0.875rem;
-            color: var(--text-tertiary);
-            margin-bottom: 2rem;
-        }
-
-        .pricing-features {
-            list-style: none;
-            text-align: left;
-            margin-bottom: 2rem;
-        }
-
-        .pricing-features li {
-            padding: 0.5rem 0;
-            font-size: 0.9375rem;
-            color: var(--text-secondary);
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .pricing-features li::before {
+        .hero-overline::before {
             content: '';
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(200, 169, 81, 0.15);
+            width: 24px;
+            height: 1px;
+            background: var(--gold);
+            flex-shrink: 0;
+        }
+
+        .hero h1 {
+            font-family: var(--serif);
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            font-weight: 300;
+            line-height: 1.05;
+            letter-spacing: -0.01em;
+            max-width: 720px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .hero-sub {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            max-width: 480px;
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.875rem 1.75rem;
+            background: var(--text-primary);
+            color: var(--bg);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn-primary-large:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-primary-large svg { width: 20px; height: 20px; }
+
+        .hero-fine {
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            line-height: 1.5;
+        }
+
+        .hero-attribution {
+            position: absolute;
+            bottom: 1.5rem;
+            right: 2rem;
+            font-size: 0.6875rem;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.05em;
+            z-index: 2;
+        }
+
+        /* ─── PAINTING STRIP ──────────────────────────────────── */
+        .strip-wrap {
+            overflow: hidden;
+            position: relative;
+            padding: 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .strip-wrap::before,
+        .strip-wrap::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 140px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .strip-wrap::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
+        .strip-wrap::after  { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
+
+        .strip-track {
+            display: flex;
+            gap: 4px;
+            animation: strip-scroll 80s linear infinite;
+            width: max-content;
+        }
+
+        .strip-track:hover { animation-play-state: paused; }
+
+        .strip-item {
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .strip-item img {
+            height: 240px;
+            width: auto;
+            display: block;
+            object-fit: cover;
+            transition: opacity 0.4s;
+            opacity: 0.55;
+        }
+
+        .strip-item:hover img { opacity: 0.85; }
+
+        .strip-item-label {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 1rem 0.75rem 0.625rem;
+            background: linear-gradient(to top, rgba(10,10,10,0.9), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .strip-item:hover .strip-item-label { opacity: 1; }
+
+        .strip-item-movement {
+            font-size: 0.5625rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .strip-item-title {
+            font-family: var(--serif);
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        @keyframes strip-scroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ─── MUSEUM BAR ──────────────────────────────────────── */
+        .museum-bar {
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23C8A951'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
-            background-size: 14px;
-            background-repeat: no-repeat;
-            background-position: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
-        .trial-note {
+        .museum-bar-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-right: 0.5rem;
+        }
+
+        .museum-name {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.3125rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            white-space: nowrap;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .museum-name:hover { border-color: var(--gold-dim); color: var(--text-primary); }
+
+        .museum-dot {
+            width: 3px; height: 3px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        /* ─── LAYOUT HELPERS ──────────────────────────────────── */
+        .section {
+            padding: 7rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-full {
+            padding: 7rem 2rem;
+        }
+
+        .overline {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .overline::before {
+            content: '';
+            width: 20px;
+            height: 1px;
+            background: var(--gold);
+            flex-shrink: 0;
+        }
+
+        .display-title {
+            font-family: var(--serif);
+            font-size: clamp(2.25rem, 5vw, 3.75rem);
+            font-weight: 300;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+            margin-bottom: 1.25rem;
+        }
+
+        .display-title em { font-style: italic; font-weight: 400; }
+        .display-title strong { font-weight: 600; }
+
+        .body-text {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            line-height: 1.75;
+            font-weight: 300;
+            max-width: 520px;
+        }
+
+        /* ─── SPLIT FEATURE ───────────────────────────────────── */
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
+            align-items: center;
+        }
+
+        .split.reverse { direction: rtl; }
+        .split.reverse > * { direction: ltr; }
+
+        .split-painting {
+            position: relative;
+            aspect-ratio: 4/5;
+            overflow: hidden;
+        }
+
+        .split-painting img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.8s ease;
+        }
+
+        .split-painting:hover img { transform: scale(1.025); }
+
+        .art-info-card {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            right: 1.5rem;
+            padding: 1.25rem 1.5rem;
+            background: rgba(10,10,10,0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+        }
+
+        .art-info-movement {
+            font-size: 0.5625rem;
+            font-weight: 600;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 0.375rem;
+        }
+
+        .art-info-title {
+            font-family: var(--serif);
+            font-size: 1.25rem;
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        .art-info-artist {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .split-text { padding: 1rem 0; }
+
+        .split-text .body-text { margin: 1.5rem 0 2.5rem; }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.875rem;
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .feature-list li::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--gold);
+            flex-shrink: 0;
+            margin-top: 0.5rem;
+        }
+
+        /* ─── STATEMENT SECTION ───────────────────────────────── */
+        .statement-section {
+            padding: 6rem 2rem;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .statement-section .display-title {
+            font-size: clamp(2rem, 4.5vw, 3.5rem);
+            max-width: 900px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .statement-section .body-text {
+            max-width: 560px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        /* ─── PLATFORMS ───────────────────────────────────────── */
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .platform-cell {
+            background: var(--bg);
+            padding: 2.5rem 2rem;
+            transition: background 0.3s;
+        }
+
+        .platform-cell:hover { background: var(--bg-card); }
+
+        .platform-platform {
+            font-size: 0.625rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 1.5rem;
+        }
+
+        .platform-name {
+            font-family: var(--serif);
+            font-size: 1.75rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        .platform-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .platform-features li {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.625rem;
+            line-height: 1.4;
+        }
+
+        .platform-features li::before {
+            content: '';
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            flex-shrink: 0;
+            margin-top: 0.45rem;
+        }
+
+        /* ─── HOW IT WORKS ────────────────────────────────────── */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-top: 4rem;
+        }
+
+        .step-cell {
+            background: var(--bg);
+            padding: 2.5rem 2rem;
+        }
+
+        .step-num {
+            font-family: var(--serif);
+            font-size: 4rem;
+            font-weight: 300;
+            line-height: 1;
+            color: var(--border);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .step-title {
+            font-family: var(--serif);
+            font-size: 1.375rem;
+            font-weight: 400;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-desc {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            font-weight: 300;
+        }
+
+        /* ─── MOVEMENTS ───────────────────────────────────────── */
+        .movements-intro {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 7rem 2rem 3rem;
+        }
+
+        .movements-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem 7rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .movement-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5625rem 1rem;
+            border: 1px solid var(--border);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-radius: 2px;
+            transition: all 0.25s;
+            cursor: default;
+        }
+
+        .movement-chip:hover {
+            border-color: var(--gold-dim);
+            color: var(--gold);
+            background: rgba(201, 168, 76, 0.05);
+        }
+
+        .movement-chip-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--gold);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .movement-chip:hover .movement-chip-dot { opacity: 1; }
+
+        /* ─── PRICING ─────────────────────────────────────────── */
+        .pricing-section {
+            border-top: 1px solid var(--border);
+            padding: 7rem 2rem;
+            background: var(--bg-card);
+        }
+
+        .pricing-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
+            align-items: start;
+        }
+
+        .pricing-left .body-text { margin: 1.5rem 0 2.5rem; }
+
+        .pricing-free-note {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            line-height: 1.6;
+        }
+
+        .pricing-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+        }
+
+        .pricing-badge {
+            display: inline-block;
+            font-size: 0.5625rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--bg);
+            background: var(--gold);
+            padding: 0.3125rem 0.625rem;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-amount {
+            font-family: var(--serif);
+            font-size: 3.5rem;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 0.375rem;
+        }
+
+        .pricing-period {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .pricing-alt {
             font-size: 0.8125rem;
             color: var(--text-tertiary);
+            margin-bottom: 2rem;
+        }
+
+        .pricing-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+
+        .pricing-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.875rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .check-icon {
+            width: 16px; height: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: var(--gold);
+        }
+
+        .btn-cta-full {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            padding: 0.9375rem 1.5rem;
+            background: var(--text-primary);
+            color: var(--bg);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+            width: 100%;
+        }
+
+        .btn-cta-full:hover { opacity: 0.88; }
+
+        .pricing-fine {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-align: center;
             margin-top: 1rem;
         }
 
-        /* Footer */
+        /* ─── FINAL CTA ───────────────────────────────────────── */
+        .final-cta {
+            position: relative;
+            min-height: 480px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+        }
+
+        .final-cta-painting {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+        }
+
+        .final-cta-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(10,10,10,0.95) 40%, rgba(10,10,10,0.5) 100%);
+        }
+
+        .final-cta-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 5rem 2rem;
+        }
+
+        .final-cta .display-title { max-width: 560px; margin-bottom: 1.25rem; }
+        .final-cta .body-text { margin-bottom: 2.5rem; }
+
+        /* ─── FOOTER ──────────────────────────────────────────── */
         footer {
-            border-top: 1px solid rgba(245, 240, 232, 0.06);
+            border-top: 1px solid var(--border);
             padding: 3rem 2rem;
-            text-align: center;
+        }
+
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
         }
 
         .footer-logo {
             font-family: var(--serif);
             font-size: 1.125rem;
-            font-weight: 600;
+            font-weight: 400;
             color: var(--text-primary);
-            margin-bottom: 1rem;
+            text-decoration: none;
         }
 
-        .footer-logo span { color: var(--gold); }
+        .footer-logo em { font-style: normal; color: var(--gold); }
 
         .footer-links {
             display: flex;
-            gap: 2rem;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
+            gap: 1.75rem;
         }
 
         .footer-links a {
@@ -522,272 +871,502 @@
             color: var(--text-tertiary);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            nav { padding: 0.75rem 1rem; }
-            .nav-links { display: none; }
-            section { padding: 4rem 1.25rem; }
-            .features-grid { grid-template-columns: 1fr; }
-            .platforms-grid { grid-template-columns: repeat(2, 1fr); }
-            .steps { grid-template-columns: 1fr; }
-            .painting-track img { height: 180px; }
-        }
-
-        /* Fade-in on scroll */
-        .fade-in {
+        /* ─── FADE IN ─────────────────────────────────────────── */
+        .reveal {
             opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            transform: translateY(24px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
         }
 
-        .fade-in.visible {
+        .reveal.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* ─── RESPONSIVE ──────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .split { grid-template-columns: 1fr; gap: 3rem; }
+            .split.reverse { direction: ltr; }
+            .platforms-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-grid { grid-template-columns: 1fr; }
+            .pricing-inner { grid-template-columns: 1fr; gap: 3rem; }
+            .nav-links { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            nav { padding: 1rem; }
+            .hero-content { padding: 0 1.25rem 4rem; }
+            .section { padding: 5rem 1.25rem; }
+            .section-full { padding: 5rem 1.25rem; }
+            .movements-intro { padding: 5rem 1.25rem 2rem; }
+            .movements-grid { padding: 0 1.25rem 5rem; }
+            .platforms-grid { grid-template-columns: 1fr; }
+            .strip-item img { height: 160px; }
+            .footer-inner { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
 
-<!-- Navigation -->
-<nav>
-    <a href="#" class="nav-logo">Daily <span>Canvas</span></a>
-    <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#platforms">Platforms</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#" class="btn-download">
+<!-- ─── NAV ─────────────────────────────────────────────────────── -->
+<nav id="nav">
+    <a href="#" class="nav-logo">Daily <em>Canvas</em></a>
+    <div class="nav-right">
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#platforms">Platforms</a>
+            <a href="#pricing">Pricing</a>
+        </div>
+        <a href="#" class="btn-app-store">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            Download
+            App Store
         </a>
     </div>
 </nav>
 
-<!-- Hero -->
+<!-- ─── HERO ──────────────────────────────────────────────────────── -->
 <section class="hero">
+    <div class="hero-painting"></div>
+    <div class="hero-overlay"></div>
     <div class="hero-content">
-        <p class="hero-overline">A new masterpiece every day</p>
-        <h1>Museum art on your screen, <em>every day</em></h1>
-        <p class="hero-subtitle">
-            Daily Canvas delivers world-class paintings from the Met, Rijksmuseum, and more
-            to your lock screen, desktop, and watch face. No effort, no searching &mdash;
-            just beautiful art that matches your taste.
-        </p>
-        <div class="hero-ctas">
-            <a href="#" class="btn-download">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <p class="hero-overline">Museum art · Daily delivery</p>
+        <h1>A masterpiece,<br><em>every morning.</em></h1>
+        <p class="hero-sub">Museum-quality art curated to your taste, delivered to every screen you own. No effort. No searching.</p>
+        <div class="hero-actions">
+            <a href="#" class="btn-primary-large">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                 Download on the App Store
             </a>
-            <a href="#features" class="btn-secondary">Learn More</a>
-        </div>
-        <p class="hero-price">Free to try &middot; $9.99/year for all features</p>
-    </div>
-</section>
-
-<!-- Features -->
-<section id="features" class="fade-in">
-    <p class="section-label">Features</p>
-    <h2 class="section-title">Art that fits your life</h2>
-    <p class="section-subtitle">
-        Every day, a new painting chosen for you. Rich context so every
-        glance teaches you something. Synced across all your Apple devices.
-    </p>
-
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">&#x1F3A8;</div>
-            <h3>Personalized Daily Art</h3>
-            <p>Tell us what you love &mdash; Impressionism, landscapes, Renaissance &mdash;
-            and we'll curate a new painting every day that matches your taste.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">&#x1F5BC;</div>
-            <h3>Auto Wallpaper</h3>
-            <p>Your Mac desktop updates automatically. On iPhone, a one-time Shortcuts
-            setup makes it hands-free. Wake up to new art every morning.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">&#x1F4DA;</div>
-            <h3>Learn as You Look</h3>
-            <p>Every piece comes with the artist's story, the movement it belongs to,
-            and links to learn more. Art history, one day at a time.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">&#x1F504;</div>
-            <h3>Cross-Device Sync</h3>
-            <p>Change your wallpaper on iPhone and it updates on your Mac. Same
-            art, same moment, everywhere via iCloud.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">&#x2702;</div>
-            <h3>Smart Crop Editor</h3>
-            <p>Intelligently crops to your screen's aspect ratio with focal-point
-            detection. Adjust position and zoom to get it perfect.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">&#x2B50;</div>
-            <h3>Collections & Favorites</h3>
-            <p>Save the pieces that move you. Browse your history. Explore curated
-            art packs by artist or movement.</p>
+            <div>
+                <div style="font-size:0.8125rem; color:var(--text-primary); font-weight:500; margin-bottom:0.2rem;">Free to start</div>
+                <div class="hero-fine">7-day trial · $9.99/yr for all features</div>
+            </div>
         </div>
     </div>
+    <div class="hero-attribution">The Kiss — Gustav Klimt, 1907–08 · Österreichische Galerie Belvedere</div>
 </section>
 
-<!-- Platforms -->
-<section id="platforms" class="fade-in">
-    <p class="section-label">Everywhere you look</p>
-    <h2 class="section-title">One app, every screen</h2>
-    <p class="section-subtitle">
-        Daily Canvas is built natively for every Apple platform.
-        Your art follows you from pocket to desk to wrist.
-    </p>
-
-    <div class="platforms-grid">
-        <div class="platform-card">
-            <div class="platform-icon">&#x1F4F1;</div>
-            <h3>iPhone</h3>
-            <p>Lock screen &amp; home screen wallpaper via Shortcuts automation. Widgets for your home screen.</p>
+<!-- ─── PAINTING STRIP ─────────────────────────────────────────────── -->
+<div class="strip-wrap">
+    <div class="strip-track" id="stripTrack">
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg/800px-Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg" alt="Water Lilies">
+            <div class="strip-item-label"><div class="strip-item-movement">Impressionism</div><div class="strip-item-title">Water Lilies</div></div>
         </div>
-
-        <div class="platform-card">
-            <div class="platform-icon">&#x1F5A5;</div>
-            <h3>Mac</h3>
-            <p>Automatic desktop wallpaper. Menu bar app. macOS widgets on your desktop and Notification Center.</p>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg" alt="Girl with a Pearl Earring">
+            <div class="strip-item-label"><div class="strip-item-movement">Dutch Golden Age</div><div class="strip-item-title">Girl with a Pearl Earring</div></div>
         </div>
-
-        <div class="platform-card">
-            <div class="platform-icon">&#x231A;</div>
-            <h3>Apple Watch</h3>
-            <p>Photos watch face with daily art. Browse, zoom, and save favorites right from your wrist.</p>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Auguste_renoir%2C_ballo_al_moulin_de_la_galette%2C_1876%2C_01.jpg/1280px-Auguste_renoir%2C_ballo_al_moulin_de_la_galette%2C_1876%2C_01.jpg" alt="Dance at Le Moulin de la Galette">
+            <div class="strip-item-label"><div class="strip-item-movement">Impressionism</div><div class="strip-item-title">Dance at Le Moulin de la Galette</div></div>
         </div>
-
-        <div class="platform-card">
-            <div class="platform-icon">&#x1F4FA;</div>
-            <h3>Apple TV</h3>
-            <p>Full-screen art display mode. Turn your TV into a digital gallery with slideshow and Top Shelf.</p>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/800px-Tsunami_by_hokusai_19th_century.jpg" alt="The Great Wave">
+            <div class="strip-item-label"><div class="strip-item-movement">Ukiyo-e</div><div class="strip-item-title">The Great Wave off Kanagawa</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg/800px-Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg" alt="Wanderer above the Sea of Fog">
+            <div class="strip-item-label"><div class="strip-item-movement">Romanticism</div><div class="strip-item-title">Wanderer above the Sea of Fog</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/1280px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg" alt="Birth of Venus">
+            <div class="strip-item-label"><div class="strip-item-movement">Renaissance</div><div class="strip-item-title">Birth of Venus</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/1280px-Monet_-_Impression%2C_Sunrise.jpg" alt="Impression, Sunrise">
+            <div class="strip-item-label"><div class="strip-item-movement">Impressionism</div><div class="strip-item-title">Impression, Sunrise</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg/1280px-A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg" alt="A Sunday on La Grande Jatte">
+            <div class="strip-item-label"><div class="strip-item-movement">Post-Impressionism</div><div class="strip-item-title">A Sunday on La Grande Jatte</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Johannes_Vermeer_-_Het_melkmeisje_-_Google_Art_Project.jpg/800px-Johannes_Vermeer_-_Het_melkmeisje_-_Google_Art_Project.jpg" alt="The Milkmaid">
+            <div class="strip-item-label"><div class="strip-item-movement">Dutch Golden Age</div><div class="strip-item-title">The Milkmaid</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg" alt="Mona Lisa">
+            <div class="strip-item-label"><div class="strip-item-movement">Renaissance</div><div class="strip-item-title">Mona Lisa</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Delacroix_-_La_libert%C3%A9_guidant_le_peuple.jpg/1280px-Delacroix_-_La_libert%C3%A9_guidant_le_peuple.jpg" alt="Liberty Leading the People">
+            <div class="strip-item-label"><div class="strip-item-movement">Romanticism</div><div class="strip-item-title">Liberty Leading the People</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/The_Fighting_Temeraire%2C_JMW_Turner%2C_National_Gallery.jpg/1280px-The_Fighting_Temeraire%2C_JMW_Turner%2C_National_Gallery.jpg" alt="The Fighting Temeraire">
+            <div class="strip-item-label"><div class="strip-item-movement">Romanticism</div><div class="strip-item-title">The Fighting Temeraire</div></div>
+        </div>
+        <!-- duplicate for seamless loop -->
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg/800px-Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg" alt="Water Lilies">
+            <div class="strip-item-label"><div class="strip-item-movement">Impressionism</div><div class="strip-item-title">Water Lilies</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg" alt="Girl with a Pearl Earring">
+            <div class="strip-item-label"><div class="strip-item-movement">Dutch Golden Age</div><div class="strip-item-title">Girl with a Pearl Earring</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Auguste_renoir%2C_ballo_al_moulin_de_la_galette%2C_1876%2C_01.jpg/1280px-Auguste_renoir%2C_ballo_al_moulin_de_la_galette%2C_1876%2C_01.jpg" alt="Dance at Le Moulin de la Galette">
+            <div class="strip-item-label"><div class="strip-item-movement">Impressionism</div><div class="strip-item-title">Dance at Le Moulin de la Galette</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/800px-Tsunami_by_hokusai_19th_century.jpg" alt="The Great Wave">
+            <div class="strip-item-label"><div class="strip-item-movement">Ukiyo-e</div><div class="strip-item-title">The Great Wave off Kanagawa</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg/800px-Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg" alt="Wanderer above the Sea of Fog">
+            <div class="strip-item-label"><div class="strip-item-movement">Romanticism</div><div class="strip-item-title">Wanderer above the Sea of Fog</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/1280px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg" alt="Birth of Venus">
+            <div class="strip-item-label"><div class="strip-item-movement">Renaissance</div><div class="strip-item-title">Birth of Venus</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/1280px-Monet_-_Impression%2C_Sunrise.jpg" alt="Impression, Sunrise">
+            <div class="strip-item-label"><div class="strip-item-movement">Impressionism</div><div class="strip-item-title">Impression, Sunrise</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg/1280px-A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg" alt="A Sunday on La Grande Jatte">
+            <div class="strip-item-label"><div class="strip-item-movement">Post-Impressionism</div><div class="strip-item-title">A Sunday on La Grande Jatte</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Johannes_Vermeer_-_Het_melkmeisje_-_Google_Art_Project.jpg/800px-Johannes_Vermeer_-_Het_melkmeisje_-_Google_Art_Project.jpg" alt="The Milkmaid">
+            <div class="strip-item-label"><div class="strip-item-movement">Dutch Golden Age</div><div class="strip-item-title">The Milkmaid</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg" alt="Mona Lisa">
+            <div class="strip-item-label"><div class="strip-item-movement">Renaissance</div><div class="strip-item-title">Mona Lisa</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Delacroix_-_La_libert%C3%A9_guidant_le_peuple.jpg/1280px-Delacroix_-_La_libert%C3%A9_guidant_le_peuple.jpg" alt="Liberty Leading the People">
+            <div class="strip-item-label"><div class="strip-item-movement">Romanticism</div><div class="strip-item-title">Liberty Leading the People</div></div>
+        </div>
+        <div class="strip-item">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/The_Fighting_Temeraire%2C_JMW_Turner%2C_National_Gallery.jpg/1280px-The_Fighting_Temeraire%2C_JMW_Turner%2C_National_Gallery.jpg" alt="The Fighting Temeraire">
+            <div class="strip-item-label"><div class="strip-item-movement">Romanticism</div><div class="strip-item-title">The Fighting Temeraire</div></div>
         </div>
     </div>
-</section>
+</div>
 
-<!-- How it works -->
-<section class="fade-in">
-    <p class="section-label">How it works</p>
-    <h2 class="section-title">Three steps to daily art</h2>
-    <p class="section-subtitle">
-        Set it once, enjoy it forever. Daily Canvas handles the rest.
-    </p>
+<!-- ─── MUSEUM BAR ─────────────────────────────────────────────────── -->
+<div class="museum-bar">
+    <span class="museum-bar-label">Art sourced from</span>
+    <span class="museum-name">The Metropolitan Museum of Art</span>
+    <span class="museum-dot"></span>
+    <span class="museum-name">Rijksmuseum</span>
+    <span class="museum-dot"></span>
+    <span class="museum-name">Art Institute of Chicago</span>
+    <span class="museum-dot"></span>
+    <span class="museum-name">Cleveland Museum of Art</span>
+</div>
 
-    <div class="steps">
-        <div class="step">
-            <h3>Pick your taste</h3>
-            <p>Choose the art categories you love &mdash; or swipe through a quick taste quiz. Daily Canvas learns what you like over time.</p>
+<!-- ─── FEATURE 1: DAILY ART ──────────────────────────────────────── -->
+<div class="section" id="features">
+    <div class="split reveal">
+        <div class="split-painting">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg/800px-Caspar_David_Friedrich_-_Wanderer_above_the_sea_of_fog.jpg" alt="Wanderer above the Sea of Fog">
+            <div class="art-info-card">
+                <div class="art-info-movement">Romanticism · 1818</div>
+                <div class="art-info-title">Wanderer above the Sea of Fog</div>
+                <div class="art-info-artist">Caspar David Friedrich · Hamburger Kunsthalle</div>
+            </div>
         </div>
-
-        <div class="step">
-            <h3>Set up auto-wallpaper</h3>
-            <p>On Mac, it's automatic. On iPhone, a guided Shortcuts setup takes 30 seconds. Your wallpaper updates every morning.</p>
-        </div>
-
-        <div class="step">
-            <h3>Discover daily</h3>
-            <p>Every day, a new museum-quality painting appears on your screen. Tap to learn the story behind it. Save the ones you love.</p>
+        <div class="split-text">
+            <p class="overline">Daily delivery</p>
+            <h2 class="display-title">One painting.<br><em>Every morning.</em><br>Chosen for you.</h2>
+            <p class="body-text">
+                Tell us what moves you — Impressionism, Baroque, Landscapes, Portraits — and Daily Canvas selects a new museum-quality work every day. As you like and skip, it learns.
+            </p>
+            <ul class="feature-list">
+                <li>1,000+ paintings from the world's greatest open-access collections</li>
+                <li>Personalized from 12 art movements and categories</li>
+                <li>Never repeats a work within 365 days</li>
+                <li>Skip up to 3 times daily — each skip trains your taste profile</li>
+            </ul>
         </div>
     </div>
-</section>
+</div>
 
-<!-- Sources -->
-<section class="fade-in" style="text-align: center;">
-    <p class="section-label">Museum-quality sources</p>
-    <h2 class="section-title">Art from the world's greatest museums</h2>
-    <p class="section-subtitle" style="margin-left: auto; margin-right: auto;">
-        Every painting is sourced from open-access museum collections.
-        High-resolution scans, proper attribution, always free to enjoy.
+<!-- ─── STATEMENT ──────────────────────────────────────────────────── -->
+<div class="statement-section reveal">
+    <p class="overline" style="justify-content:center;">The art is everything</p>
+    <h2 class="display-title">
+        The UI is a stage for the art,<br><em>not a competitor to it.</em>
+    </h2>
+    <p class="body-text">
+        Every interface decision defers to the painting. The chrome earns its place or disappears. The art is the only color in the room.
     </p>
+</div>
 
-    <div class="sources">
-        <div class="source-badge"><strong>The Metropolitan Museum of Art</strong> &middot; 471K+ works</div>
-        <div class="source-badge"><strong>Rijksmuseum</strong> &middot; 800K+ objects</div>
-        <div class="source-badge"><strong>Art Institute of Chicago</strong></div>
-        <div class="source-badge"><strong>Cleveland Museum of Art</strong></div>
-        <div class="source-badge"><strong>National Gallery of Art</strong></div>
-        <div class="source-badge"><strong>Smithsonian American Art</strong></div>
+<!-- ─── FEATURE 2: WALLPAPER ──────────────────────────────────────── -->
+<div class="section">
+    <div class="split reverse reveal">
+        <div class="split-painting">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/1280px-Monet_-_Impression%2C_Sunrise.jpg" alt="Impression, Sunrise">
+            <div class="art-info-card">
+                <div class="art-info-movement">Impressionism · 1872</div>
+                <div class="art-info-title">Impression, Sunrise</div>
+                <div class="art-info-artist">Claude Monet · Musée Marmottan Monet</div>
+            </div>
+        </div>
+        <div class="split-text">
+            <p class="overline">Your screens, transformed</p>
+            <h2 class="display-title">Wakes up<br>before you do.</h2>
+            <p class="body-text">
+                On Mac, it's fully automatic — your desktop changes on schedule while you sleep. On iPhone, a one-time Shortcuts setup takes 30 seconds. Wake up to a gallery.
+            </p>
+            <ul class="feature-list">
+                <li>macOS auto-wallpaper via NSWorkspace — silent, scheduled, seamless</li>
+                <li>iPhone lock screen and home screen via Shortcuts automation</li>
+                <li>Smart crop preserves the focal point of every composition</li>
+                <li>Cross-device sync — one selection, everywhere at once</li>
+            </ul>
+        </div>
     </div>
-</section>
+</div>
 
-<!-- Pricing -->
-<section id="pricing" class="fade-in">
-    <p class="section-label">Simple pricing</p>
-    <h2 class="section-title" style="text-align: center;">One plan, everything included</h2>
-    <p class="section-subtitle" style="text-align: center; margin-left: auto; margin-right: auto;">
-        Free to browse daily art. Subscribe to unlock wallpapers, widgets, and all platforms.
-    </p>
+<!-- ─── FEATURE 3: LEARN ───────────────────────────────────────────── -->
+<div class="section">
+    <div class="split reveal">
+        <div class="split-painting">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg" alt="Girl with a Pearl Earring">
+            <div class="art-info-card">
+                <div class="art-info-movement">Dutch Golden Age · c. 1665</div>
+                <div class="art-info-title">Girl with a Pearl Earring</div>
+                <div class="art-info-artist">Johannes Vermeer · Mauritshuis, The Hague</div>
+            </div>
+        </div>
+        <div class="split-text">
+            <p class="overline">Context with every canvas</p>
+            <h2 class="display-title">The story<br>behind every<br><em>brushstroke.</em></h2>
+            <p class="body-text">
+                Each daily painting arrives with the artist's biography, the movement it belongs to, historical context, and links to learn more. Art history, one morning at a time.
+            </p>
+            <ul class="feature-list">
+                <li>Artist biographies and key works</li>
+                <li>Movement explainers — Baroque to Surrealism</li>
+                <li>Museum attribution and collection context</li>
+                <li>Curated Art Packs by artist or movement</li>
+            </ul>
+        </div>
+    </div>
+</div>
 
-    <div class="pricing-card">
-        <div class="price">$9.99</div>
-        <div class="price-period">per year</div>
-        <div class="price-alt">or $0.99/month</div>
+<!-- ─── PLATFORMS ─────────────────────────────────────────────────── -->
+<div id="platforms" style="border-top:1px solid var(--border);">
+    <div style="max-width:1100px; margin:0 auto; padding:7rem 2rem 3rem;">
+        <p class="overline reveal">Every Apple platform</p>
+        <h2 class="display-title reveal">One app.<br>Every screen.</h2>
+    </div>
+    <div style="max-width:1100px; margin:0 auto; padding:0 2rem 7rem;">
+        <div class="platforms-grid reveal">
+            <div class="platform-cell">
+                <div class="platform-platform">iPhone · iPad</div>
+                <div class="platform-name">iOS</div>
+                <ul class="platform-features">
+                    <li>Lock screen &amp; home screen wallpaper via Shortcuts</li>
+                    <li>Small, medium, and large home screen widgets</li>
+                    <li>Lock screen widgets</li>
+                    <li>App Intent: "Get Today's Art"</li>
+                    <li>Photos album for Watch face</li>
+                </ul>
+            </div>
+            <div class="platform-cell">
+                <div class="platform-platform">MacBook · iMac · Mac mini</div>
+                <div class="platform-name">macOS</div>
+                <ul class="platform-features">
+                    <li>Fully automatic desktop wallpaper</li>
+                    <li>Configurable schedule — daily, hourly, or timed</li>
+                    <li>Menu bar app with thumbnail preview</li>
+                    <li>macOS widgets in Notification Center</li>
+                    <li>Sidebar navigation layout</li>
+                </ul>
+            </div>
+            <div class="platform-cell">
+                <div class="platform-platform">Apple Watch</div>
+                <div class="platform-name">watchOS</div>
+                <ul class="platform-features">
+                    <li>WidgetKit complications on any watch face</li>
+                    <li>Square-cropped art optimized for the display</li>
+                    <li>Guided Photos watch face setup</li>
+                    <li>Browse, zoom, and favorite from your wrist</li>
+                </ul>
+            </div>
+            <div class="platform-cell">
+                <div class="platform-platform">Apple TV</div>
+                <div class="platform-name">tvOS</div>
+                <ul class="platform-features">
+                    <li>Full-screen digital gallery frame mode</li>
+                    <li>Ken Burns slow-zoom slideshow</li>
+                    <li>Top Shelf art integration</li>
+                    <li>Siri Remote focus navigation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <ul class="pricing-features">
-            <li>Daily art on all Apple devices</li>
-            <li>Auto wallpaper (Mac + iPhone)</li>
-            <li>Home screen &amp; lock screen widgets</li>
-            <li>Apple Watch face integration</li>
-            <li>Apple TV gallery mode</li>
-            <li>Favorites, history &amp; collections</li>
-            <li>Cross-device iCloud sync</li>
-            <li>Art packs &mdash; curated by artist &amp; movement</li>
-            <li>Smart crop with zoom control</li>
-            <li>Skip &amp; shuffle daily picks</li>
-        </ul>
+<!-- ─── HOW IT WORKS ───────────────────────────────────────────────── -->
+<div style="border-top:1px solid var(--border);">
+    <div class="section">
+        <p class="overline reveal">Setup in minutes</p>
+        <h2 class="display-title reveal">Set it once.<br><em>Enjoy it forever.</em></h2>
+        <div class="steps-grid reveal">
+            <div class="step-cell">
+                <span class="step-num">01</span>
+                <div class="step-title">Pick your taste</div>
+                <p class="step-desc">Choose 3 or more art categories you love — Impressionism, Landscapes, Portraits, Surrealism. The app learns from your likes and skips over time.</p>
+            </div>
+            <div class="step-cell">
+                <span class="step-num">02</span>
+                <div class="step-title">Set up wallpaper</div>
+                <p class="step-desc">On Mac, it's already working. On iPhone, a guided 30-second Shortcuts setup creates the automation. New art, every morning, automatically.</p>
+            </div>
+            <div class="step-cell">
+                <span class="step-num">03</span>
+                <div class="step-title">Discover daily</div>
+                <p class="step-desc">Each day, a new museum-quality painting arrives on every screen. Tap to read the story behind it. Favorite the ones that move you.</p>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <a href="#" class="btn-download" style="width: 100%; justify-content: center;">
-            Start 7-Day Free Trial
+<!-- ─── MOVEMENTS ─────────────────────────────────────────────────── -->
+<div style="border-top:1px solid var(--border);">
+    <div class="movements-intro reveal">
+        <p class="overline">12 categories</p>
+        <h2 class="display-title">What moves you?</h2>
+        <p class="body-text">Choose the movements and subjects that resonate. Daily Canvas builds a taste profile that improves with every morning.</p>
+    </div>
+    <div class="movements-grid reveal">
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Impressionism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Baroque</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Renaissance</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Romanticism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Post-Impressionism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Surrealism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Realism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Modernism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Expressionism</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Landscapes</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Portraits</div>
+        <div class="movement-chip"><span class="movement-chip-dot"></span>Still Life</div>
+    </div>
+</div>
+
+<!-- ─── PRICING ───────────────────────────────────────────────────── -->
+<div class="pricing-section" id="pricing">
+    <div class="pricing-inner">
+        <div class="pricing-left reveal">
+            <p class="overline">Pricing</p>
+            <h2 class="display-title">Simple.<br><em>One plan.</em><br>Everything.</h2>
+            <p class="body-text">
+                Free to start — a new painting arrives every day, no account required. Subscribe to unlock wallpaper automation, widgets, favorites, and every platform.
+            </p>
+            <p class="pricing-free-note">
+                Free tier includes daily art, art detail view, and search.<br>
+                Pro unlocks everything else.
+            </p>
+        </div>
+        <div class="pricing-card reveal">
+            <div class="pricing-badge">Daily Canvas Pro</div>
+            <div class="pricing-amount">$9.99</div>
+            <div class="pricing-period">per year</div>
+            <div class="pricing-alt">or $0.99 / month</div>
+            <div class="pricing-divider"></div>
+            <ul class="pricing-features">
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Daily art on all Apple devices
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Auto wallpaper — Mac &amp; iPhone
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Home screen &amp; lock screen widgets
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Apple Watch complications &amp; face album
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Apple TV digital gallery mode
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Favorites, history &amp; cross-device sync
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    All Art Packs — by artist &amp; movement
+                </li>
+                <li>
+                    <svg class="check-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Skip &amp; shuffle daily picks
+                </li>
+            </ul>
+            <a href="#" class="btn-cta-full">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                Start 7-Day Free Trial
+            </a>
+            <p class="pricing-fine">No commitment · Cancel anytime · Family Sharing included</p>
+        </div>
+    </div>
+</div>
+
+<!-- ─── FINAL CTA ──────────────────────────────────────────────────── -->
+<div class="final-cta">
+    <div class="final-cta-painting"></div>
+    <div class="final-cta-overlay"></div>
+    <div class="final-cta-content reveal">
+        <p class="overline">Your first piece arrives today</p>
+        <h2 class="display-title">Turn every glance into<br>a moment of <em>discovery.</em></h2>
+        <p class="body-text">
+            500 years of human creativity, curated to your taste, delivered every morning. Free to start.
+        </p>
+        <a href="#" class="btn-primary-large">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Download Daily Canvas
         </a>
-        <p class="trial-note">No commitment. Cancel anytime.</p>
     </div>
-</section>
+    <div style="position:absolute; bottom:1.5rem; right:2rem; font-size:0.6875rem; color:rgba(255,255,255,0.25); letter-spacing:0.05em; z-index:3;">The Starry Night — Vincent van Gogh, 1889 · MoMA, New York</div>
+</div>
 
-<!-- Final CTA -->
-<section class="fade-in" style="text-align: center; padding-bottom: 4rem;">
-    <h2 class="section-title">Turn every glance into a<br>moment of discovery</h2>
-    <p class="section-subtitle" style="margin-left: auto; margin-right: auto; margin-bottom: 2rem;">
-        Join thousands who start their day with a new masterpiece.
-    </p>
-    <a href="#" class="btn-download" style="font-size: 1rem; padding: 0.875rem 2rem;">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-        Download Daily Canvas
-    </a>
-</section>
-
-<!-- Footer -->
+<!-- ─── FOOTER ────────────────────────────────────────────────────── -->
 <footer>
-    <div class="footer-logo">Daily <span>Canvas</span></div>
-    <div class="footer-links">
-        <a href="https://dailycanvasapp.com/privacy">Privacy Policy</a>
-        <a href="https://dailycanvasapp.com/terms">Terms of Service</a>
-        <a href="mailto:support@dailycanvasapp.com">Support</a>
+    <div class="footer-inner">
+        <a href="#" class="footer-logo">Daily <em>Canvas</em></a>
+        <div class="footer-links">
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="mailto:support@dailycanvasapp.com">Support</a>
+        </div>
+        <p class="footer-copy">&copy; 2026 Daily Canvas. Art sourced from open-access museum collections.</p>
     </div>
-    <p class="footer-copy">
-        &copy; 2026 Daily Canvas. Art sourced from open-access museum collections.
-        Built with care for art lovers everywhere.
-    </p>
 </footer>
 
-<!-- Scroll Animation -->
 <script>
+    // Nav scroll effect
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive: true });
+
+    // Reveal on scroll
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.1 });
+    }, { threshold: 0.08 });
 
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
 
 </body>
