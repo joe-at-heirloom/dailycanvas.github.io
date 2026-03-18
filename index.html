@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Canvas - Museum Art on Your Screen, Every Day</title>
+    <meta name="description" content="Turn every glance at your device into a moment of art discovery. Daily Canvas delivers museum-quality art to your iPhone, Mac, Apple Watch, and Apple TV.">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #C8A951;
+            --gold-light: #E8D48B;
+            --bg: #111111;
+            --bg-card: #1A1A1A;
+            --bg-elevated: #222222;
+            --text-primary: #F5F0E8;
+            --text-secondary: #A09888;
+            --text-tertiary: #6B6050;
+            --serif: 'Playfair Display', Georgia, serif;
+            --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(17, 17, 17, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(200, 169, 81, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            font-family: var(--serif);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-logo span { color: var(--gold); }
+
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: var(--gold);
+            color: #111;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: all 0.25s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download:hover {
+            background: var(--gold-light);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(200, 169, 81, 0.3);
+        }
+
+        .btn-download svg { width: 18px; height: 18px; }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 40%, rgba(200, 169, 81, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 30% 60%, rgba(139, 69, 19, 0.04) 0%, transparent 60%);
+        }
+
+        .hero-content {
+            position: relative;
+            max-width: 800px;
+        }
+
+        .hero-overline {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-family: var(--serif);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        .hero-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 100px;
+            text-decoration: none;
+            border: 1px solid rgba(245, 240, 232, 0.15);
+            transition: all 0.25s;
+        }
+
+        .btn-secondary:hover {
+            border-color: rgba(245, 240, 232, 0.3);
+            background: rgba(245, 240, 232, 0.05);
+        }
+
+        .hero-price {
+            margin-top: 1.5rem;
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Painting Strip */
+        .painting-strip {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .painting-strip::before,
+        .painting-strip::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 120px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .painting-strip::before {
+            left: 0;
+            background: linear-gradient(to right, var(--bg), transparent);
+        }
+
+        .painting-strip::after {
+            right: 0;
+            background: linear-gradient(to left, var(--bg), transparent);
+        }
+
+        .painting-track {
+            display: flex;
+            gap: 1rem;
+            animation: scroll 60s linear infinite;
+            width: max-content;
+        }
+
+        .painting-track img {
+            height: 280px;
+            border-radius: 8px;
+            object-fit: cover;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .painting-track img:hover { opacity: 1; }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Sections */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(1.75rem, 4vw, 2.75rem);
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        .section-subtitle {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            max-width: 560px;
+            line-height: 1.7;
+            margin-bottom: 3rem;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(245, 240, 232, 0.06);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(200, 169, 81, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(200, 169, 81, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            font-size: 1.25rem;
+        }
+
+        .feature-card h3 {
+            font-family: var(--serif);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Platforms */
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .platform-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(245, 240, 232, 0.06);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .platform-card:hover {
+            border-color: rgba(200, 169, 81, 0.2);
+        }
+
+        .platform-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .platform-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .platform-card p {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* How it Works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+            counter-reset: step;
+        }
+
+        .step {
+            counter-increment: step;
+            position: relative;
+            padding-left: 0;
+        }
+
+        .step::before {
+            content: counter(step);
+            font-family: var(--serif);
+            font-size: 3rem;
+            font-weight: 700;
+            color: rgba(200, 169, 81, 0.15);
+            line-height: 1;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .step h3 {
+            font-size: 1.0625rem;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .step p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Sources */
+        .sources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid rgba(245, 240, 232, 0.06);
+            border-radius: 100px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .source-badge strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Pricing */
+        .pricing-card {
+            max-width: 480px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid rgba(200, 169, 81, 0.2);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .pricing-card .price {
+            font-family: var(--serif);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .pricing-card .price-period {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-card .price-alt {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pricing-features li::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(200, 169, 81, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23C8A951'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+            background-size: 14px;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .trial-note {
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            margin-top: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(245, 240, 232, 0.06);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: var(--serif);
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo span { color: var(--gold); }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--text-secondary); }
+
+        .footer-copy {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav { padding: 0.75rem 1rem; }
+            .nav-links { display: none; }
+            section { padding: 4rem 1.25rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .platforms-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps { grid-template-columns: 1fr; }
+            .painting-track img { height: 180px; }
+        }
+
+        /* Fade-in on scroll */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+    <a href="#" class="nav-logo">Daily <span>Canvas</span></a>
+    <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#platforms">Platforms</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#" class="btn-download">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Download
+        </a>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-content">
+        <p class="hero-overline">A new masterpiece every day</p>
+        <h1>Museum art on your screen, <em>every day</em></h1>
+        <p class="hero-subtitle">
+            Daily Canvas delivers world-class paintings from the Met, Rijksmuseum, and more
+            to your lock screen, desktop, and watch face. No effort, no searching &mdash;
+            just beautiful art that matches your taste.
+        </p>
+        <div class="hero-ctas">
+            <a href="#" class="btn-download">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                Download on the App Store
+            </a>
+            <a href="#features" class="btn-secondary">Learn More</a>
+        </div>
+        <p class="hero-price">Free to try &middot; $9.99/year for all features</p>
+    </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="fade-in">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Art that fits your life</h2>
+    <p class="section-subtitle">
+        Every day, a new painting chosen for you. Rich context so every
+        glance teaches you something. Synced across all your Apple devices.
+    </p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">&#x1F3A8;</div>
+            <h3>Personalized Daily Art</h3>
+            <p>Tell us what you love &mdash; Impressionism, landscapes, Renaissance &mdash;
+            and we'll curate a new painting every day that matches your taste.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">&#x1F5BC;</div>
+            <h3>Auto Wallpaper</h3>
+            <p>Your Mac desktop updates automatically. On iPhone, a one-time Shortcuts
+            setup makes it hands-free. Wake up to new art every morning.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">&#x1F4DA;</div>
+            <h3>Learn as You Look</h3>
+            <p>Every piece comes with the artist's story, the movement it belongs to,
+            and links to learn more. Art history, one day at a time.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">&#x1F504;</div>
+            <h3>Cross-Device Sync</h3>
+            <p>Change your wallpaper on iPhone and it updates on your Mac. Same
+            art, same moment, everywhere via iCloud.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">&#x2702;</div>
+            <h3>Smart Crop Editor</h3>
+            <p>Intelligently crops to your screen's aspect ratio with focal-point
+            detection. Adjust position and zoom to get it perfect.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">&#x2B50;</div>
+            <h3>Collections & Favorites</h3>
+            <p>Save the pieces that move you. Browse your history. Explore curated
+            art packs by artist or movement.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Platforms -->
+<section id="platforms" class="fade-in">
+    <p class="section-label">Everywhere you look</p>
+    <h2 class="section-title">One app, every screen</h2>
+    <p class="section-subtitle">
+        Daily Canvas is built natively for every Apple platform.
+        Your art follows you from pocket to desk to wrist.
+    </p>
+
+    <div class="platforms-grid">
+        <div class="platform-card">
+            <div class="platform-icon">&#x1F4F1;</div>
+            <h3>iPhone</h3>
+            <p>Lock screen &amp; home screen wallpaper via Shortcuts automation. Widgets for your home screen.</p>
+        </div>
+
+        <div class="platform-card">
+            <div class="platform-icon">&#x1F5A5;</div>
+            <h3>Mac</h3>
+            <p>Automatic desktop wallpaper. Menu bar app. macOS widgets on your desktop and Notification Center.</p>
+        </div>
+
+        <div class="platform-card">
+            <div class="platform-icon">&#x231A;</div>
+            <h3>Apple Watch</h3>
+            <p>Photos watch face with daily art. Browse, zoom, and save favorites right from your wrist.</p>
+        </div>
+
+        <div class="platform-card">
+            <div class="platform-icon">&#x1F4FA;</div>
+            <h3>Apple TV</h3>
+            <p>Full-screen art display mode. Turn your TV into a digital gallery with slideshow and Top Shelf.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="fade-in">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title">Three steps to daily art</h2>
+    <p class="section-subtitle">
+        Set it once, enjoy it forever. Daily Canvas handles the rest.
+    </p>
+
+    <div class="steps">
+        <div class="step">
+            <h3>Pick your taste</h3>
+            <p>Choose the art categories you love &mdash; or swipe through a quick taste quiz. Daily Canvas learns what you like over time.</p>
+        </div>
+
+        <div class="step">
+            <h3>Set up auto-wallpaper</h3>
+            <p>On Mac, it's automatic. On iPhone, a guided Shortcuts setup takes 30 seconds. Your wallpaper updates every morning.</p>
+        </div>
+
+        <div class="step">
+            <h3>Discover daily</h3>
+            <p>Every day, a new museum-quality painting appears on your screen. Tap to learn the story behind it. Save the ones you love.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Sources -->
+<section class="fade-in" style="text-align: center;">
+    <p class="section-label">Museum-quality sources</p>
+    <h2 class="section-title">Art from the world's greatest museums</h2>
+    <p class="section-subtitle" style="margin-left: auto; margin-right: auto;">
+        Every painting is sourced from open-access museum collections.
+        High-resolution scans, proper attribution, always free to enjoy.
+    </p>
+
+    <div class="sources">
+        <div class="source-badge"><strong>The Metropolitan Museum of Art</strong> &middot; 471K+ works</div>
+        <div class="source-badge"><strong>Rijksmuseum</strong> &middot; 800K+ objects</div>
+        <div class="source-badge"><strong>Art Institute of Chicago</strong></div>
+        <div class="source-badge"><strong>Cleveland Museum of Art</strong></div>
+        <div class="source-badge"><strong>National Gallery of Art</strong></div>
+        <div class="source-badge"><strong>Smithsonian American Art</strong></div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="fade-in">
+    <p class="section-label">Simple pricing</p>
+    <h2 class="section-title" style="text-align: center;">One plan, everything included</h2>
+    <p class="section-subtitle" style="text-align: center; margin-left: auto; margin-right: auto;">
+        Free to browse daily art. Subscribe to unlock wallpapers, widgets, and all platforms.
+    </p>
+
+    <div class="pricing-card">
+        <div class="price">$9.99</div>
+        <div class="price-period">per year</div>
+        <div class="price-alt">or $0.99/month</div>
+
+        <ul class="pricing-features">
+            <li>Daily art on all Apple devices</li>
+            <li>Auto wallpaper (Mac + iPhone)</li>
+            <li>Home screen &amp; lock screen widgets</li>
+            <li>Apple Watch face integration</li>
+            <li>Apple TV gallery mode</li>
+            <li>Favorites, history &amp; collections</li>
+            <li>Cross-device iCloud sync</li>
+            <li>Art packs &mdash; curated by artist &amp; movement</li>
+            <li>Smart crop with zoom control</li>
+            <li>Skip &amp; shuffle daily picks</li>
+        </ul>
+
+        <a href="#" class="btn-download" style="width: 100%; justify-content: center;">
+            Start 7-Day Free Trial
+        </a>
+        <p class="trial-note">No commitment. Cancel anytime.</p>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="fade-in" style="text-align: center; padding-bottom: 4rem;">
+    <h2 class="section-title">Turn every glance into a<br>moment of discovery</h2>
+    <p class="section-subtitle" style="margin-left: auto; margin-right: auto; margin-bottom: 2rem;">
+        Join thousands who start their day with a new masterpiece.
+    </p>
+    <a href="#" class="btn-download" style="font-size: 1rem; padding: 0.875rem 2rem;">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Download Daily Canvas
+    </a>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-logo">Daily <span>Canvas</span></div>
+    <div class="footer-links">
+        <a href="https://dailycanvasapp.com/privacy">Privacy Policy</a>
+        <a href="https://dailycanvasapp.com/terms">Terms of Service</a>
+        <a href="mailto:support@dailycanvasapp.com">Support</a>
+    </div>
+    <p class="footer-copy">
+        &copy; 2026 Daily Canvas. Art sourced from open-access museum collections.
+        Built with care for art lovers everywhere.
+    </p>
+</footer>
+
+<!-- Scroll Animation -->
+<script>
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
