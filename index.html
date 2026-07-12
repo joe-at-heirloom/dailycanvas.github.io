@@ -9,9 +9,8 @@
     <meta property="og:title" content="Daily Canvas — A Masterpiece, Every Morning">
     <meta property="og:description" content="Museum-quality art curated to your taste, delivered daily.">
     <meta property="og:type" content="website">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Type is the app's system stack: ui-serif resolves to New York and -apple-system
+         to SF Pro on Apple devices, so the site renders in the app's exact fonts. -->
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -25,8 +24,8 @@
             --text-primary: #F5F5F5;
             --text-secondary: #888888;
             --text-tertiary: #4A4A4A;
-            --serif: 'Cormorant Garamond', Georgia, serif;
-            --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --serif: ui-serif, 'New York', Georgia, 'Times New Roman', serif;
+            --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
         }
 
         html { scroll-behavior: smooth; }
@@ -60,13 +59,12 @@
         }
 
         .nav-logo {
-            font-family: 'Montserrat', var(--sans);
-            font-size: 0.8125rem;
-            font-weight: 900;
+            font-family: var(--serif);
+            font-size: 1.375rem;
+            font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
+            letter-spacing: 0;
         }
 
         .nav-logo em {
@@ -844,13 +842,12 @@
         }
 
         .footer-logo {
-            font-family: 'Montserrat', var(--sans);
-            font-size: 0.75rem;
-            font-weight: 900;
+            font-family: var(--serif);
+            font-size: 1.25rem;
+            font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
+            letter-spacing: 0;
         }
 
         .footer-logo em { font-style: normal; color: var(--gold); }
