@@ -42,6 +42,8 @@
             text-decoration: none;
         }
         .nav-logo em { font-style: normal; color: var(--gold); }
+        .nav-logo { display: inline-flex; align-items: center; gap: 0.625rem; white-space: nowrap; }
+        .logo-mark { width: 28px; height: 28px; border-radius: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.10), 0 2px 8px rgba(0,0,0,0.5); flex-shrink: 0; }
         .nav-back {
             font-size: 0.8125rem;
             color: var(--text-secondary);
@@ -119,10 +121,12 @@
         }
         footer a { color: var(--text-tertiary); }
     </style>
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
 </head>
 <body>
 <nav>
-    <a href="/" class="nav-logo">Daily <em>Canvas</em></a>
+    <a href="/" class="nav-logo"><img class="logo-mark" src="images/app-icon-64.png" alt="" width="28" height="28">Daily <em>Canvas</em></a>
     <a href="/" class="nav-back">← Back to site</a>
 </nav>
 
