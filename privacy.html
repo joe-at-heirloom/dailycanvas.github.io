@@ -120,6 +120,10 @@
             color: var(--text-tertiary);
         }
         footer a { color: var(--text-tertiary); }
+        footer .pc-logo { display: block; width: 150px; max-width: 100%; margin: 0 auto 1rem; opacity: 0.55; transition: opacity 0.2s; }
+        footer .pc-logo:hover { opacity: 0.85; }
+        footer .pc-logo img { display: block; width: 100%; height: auto; }
+        @media (max-width: 600px) { footer .pc-logo { width: 140px; } }
     </style>
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
@@ -255,7 +259,8 @@
 </main>
 
 <footer>
-    &copy; <!--pc:year-->2026<!--/pc:year--> <!--pc:name-->The Peninsular Company, LLC<!--/pc:name--> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
+    <a href="https://thepeninsularcompany.com" class="pc-logo" aria-label="The Peninsular Company"><img src="images/peninsular-logo.svg" alt="The Peninsular Company" width="150" height="34"></a>
+    &copy; <!--pc:year-->2026<!--/pc:year--> <!--pc:name-->The Peninsular Company, LLC<!--/pc:name--> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a> · <a href="https://apps.apple.com/us/app/daily-canvas/id6792569506">App Store</a>
 </footer>
 </body>
 </html>

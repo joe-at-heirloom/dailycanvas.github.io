@@ -897,6 +897,11 @@
             color: var(--text-tertiary);
         }
 
+        .footer-credit { display: flex; flex-direction: column; gap: 0.75rem; }
+        .footer-credit .pc-logo { display: inline-block; width: 150px; max-width: 100%; opacity: 0.55; transition: opacity 0.2s; }
+        .footer-credit .pc-logo:hover { opacity: 0.85; }
+        .footer-credit .pc-logo img { display: block; width: 100%; height: auto; }
+
         /* ─── FADE IN ─────────────────────────────────────────── */
         .reveal {
             opacity: 0;
@@ -929,6 +934,8 @@
             .platforms-grid { grid-template-columns: 1fr; }
             .strip-item img { height: 160px; }
             .footer-inner { flex-direction: column; align-items: flex-start; }
+            .footer-credit .pc-logo { width: 140px; }
+            .footer-links { flex-wrap: wrap; gap: 0.75rem 1.5rem; }
         }
     </style>
     <meta property="og:url" content="https://dailycanvasapp.com/">
@@ -1365,8 +1372,12 @@
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
             <a href="mailto:support@dailycanvasapp.com">Support</a>
+            <a href="https://apps.apple.com/us/app/daily-canvas/id6792569506" class="app-store-link">App Store</a>
         </div>
-        <p class="footer-copy">&copy; <!--pc:year-->2026<!--/pc:year--> <!--pc:name-->The Peninsular Company, LLC<!--/pc:name-->. Art sourced from open-access museum collections.</p>
+        <div class="footer-credit">
+            <a href="https://thepeninsularcompany.com" class="pc-logo" aria-label="The Peninsular Company"><img src="images/peninsular-logo.svg" alt="The Peninsular Company" width="150" height="34"></a>
+            <p class="footer-copy">&copy; <!--pc:year-->2026<!--/pc:year--> <!--pc:name-->The Peninsular Company, LLC<!--/pc:name-->. Art sourced from open-access museum collections.</p>
+        </div>
     </div>
 </footer>
 
