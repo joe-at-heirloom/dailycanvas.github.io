@@ -41,9 +41,8 @@
             color: var(--text-primary);
             text-decoration: none;
         }
-        .nav-logo em { font-style: normal; color: var(--gold); }
         .nav-logo { display: inline-flex; align-items: center; gap: 0.625rem; white-space: nowrap; }
-        .logo-mark { width: 28px; height: 28px; border-radius: 7px; box-shadow: 0 0 0 1px rgba(255,255,255,0.10), 0 2px 8px rgba(0,0,0,0.5); flex-shrink: 0; }
+        .logo-mark { height: 21px; width: auto; aspect-ratio: 43 / 26; fill: var(--gold); flex-shrink: 0; }
         .nav-back {
             font-size: 0.8125rem;
             color: var(--text-secondary);
@@ -140,7 +139,7 @@
 </head>
 <body>
 <nav>
-    <a href="/" class="nav-logo"><img class="logo-mark" src="images/app-icon-64.png" alt="" width="28" height="28">Daily <em>Canvas</em></a>
+    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 43 26" aria-hidden="true"><path fill-rule="evenodd" d="M21.5 3.164A13 13 0 1 1 21.5 22.836A13 13 0 1 1 21.5 3.164ZM7.55 6H12.05A7 7 0 0 1 12.05 20H7.55ZM10.55 9V17H12.05A4 4 0 0 0 12.05 9ZM35.554 8.34A7.25 7.25 0 1 0 35.554 17.66L33.256 15.732A4.25 4.25 0 1 1 33.256 10.268Z"/></svg>Daily Canvas</a>
     <a href="/" class="nav-back">← Back to site</a>
 </nav>
 
