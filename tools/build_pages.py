@@ -13,15 +13,17 @@ Titles, dates, museums, licenses and download links come from curated_catalog.js
 the pages never promise a painting the app doesn't have. Preview thumbnails are made from
 the CDN's portrait crop and cached in images/wallpapers/.
 
-It also builds /famous-paintings, an editorial guide for the informational search "famous
-paintings" (157K/mo, KD 9), from the hand-written entries in tools/famous_paintings.py.
+It also builds two editorial guides for informational searches, from hand-written entries:
+/famous-paintings ("famous paintings", 157K/mo, KD 9) from tools/famous_paintings.py and
+/art-movements ("art movements", 6.4K/mo, KD 24) from tools/art_movements.py.
 
     python3 tools/build_pages.py [--catalog PATH]
 """
-import argparse, datetime, html, json, os, re, subprocess, sys
+import argparse, datetime, hashlib, html, json, os, re, subprocess, sys
 
 from PIL import Image
 
+import art_movements as am
 import famous_paintings as fp
 
 SITE = "https://dailycanvasapp.com"
@@ -413,6 +415,11 @@ def page_html(page, cat, all_pages):
 {FOOTER}"""
 
 
+# Busts the day-long cache on wallpapers.css (see _headers) whenever the stylesheet changes.
+with open(os.path.join(ROOT, "wallpapers.css"), "rb") as _f:
+    CSS_VERSION = hashlib.sha1(_f.read()).hexdigest()[:8]
+
+
 def head_html(title, description, url, og, ld, og_type="website"):
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -437,7 +444,7 @@ def head_html(title, description, url, og, ld, og_type="website"):
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
     <link rel="preconnect" href="https://cdn.dailycanvasapp.com">
-    <link rel="stylesheet" href="/wallpapers.css">
+    <link rel="stylesheet" href="/wallpapers.css?v={CSS_VERSION}">
     <script type="application/ld+json">{json.dumps(clean(ld), ensure_ascii=False)}</script>
 </head>
 <body>
@@ -448,7 +455,7 @@ def head_html(title, description, url, og, ld, og_type="website"):
 
 
 FOOTER = """  <footer>
-    <p><a href="/">Daily Canvas</a> · <a href="/art-wallpaper">Art wallpaper</a> · <a href="/famous-paintings">Famous paintings</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a></p>
+    <p><a href="/">Daily Canvas</a> · <a href="/art-wallpaper">Art wallpaper</a> · <a href="/famous-paintings">Famous paintings</a> · <a href="/art-movements">Art movements</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a></p>
     <p class="fine">Images courtesy of the museums named on each painting, from their open-access collections.</p>
   </footer>
 </body>
@@ -549,6 +556,7 @@ def guide_html(cat):
         <p>{esc(a)}</p>
       </details>""" for q, a in fp.FAQ)
     related = "\n".join(f'        <li><a href="/{pg["slug"]}">{esc(pg["h1"])}</a></li>' for pg in PAGES)
+    related += f'\n        <li><a href="/{MOVEMENTS_SLUG}">Art movements: a timeline</a></li>'
 
     return f"""{head_html(title, description, url, og, ld, og_type="article")}
 
@@ -588,9 +596,145 @@ def guide_html(cat):
 {FOOTER}"""
 
 
+MOVEMENTS_SLUG = "art-movements"
+
+
+def famous_anchors():
+    return {e["id"]: slugify(e["t"]) for _, _, es in fp.SECTIONS for e in es}
+
+
+def movements_html(cat):
+    url = f"{SITE}/{MOVEMENTS_SLUG}"
+    mv = am.MOVEMENTS
+    title = "Art Movements: A Timeline from the Renaissance to Pop Art"
+    h1 = "Art movements: a timeline from the Renaissance to Pop Art"
+    description = (f"The major art movements in order, with dates, key artists, how to recognize each one "
+                   f"and examples: {len(mv)} movements from the Renaissance and Baroque to Impressionism, "
+                   "Cubism and Pop Art.")
+    og = og_image(cat["wikimedia-Q208230"], MOVEMENTS_SLUG)
+    anchors = famous_anchors()
+
+    rows = "\n".join(f"""          <tr><th scope="row"><a href="#{m['slug']}">{esc(m['name'])}</a></th><td>{esc(m['dates'])}</td><td>{esc(m['where'])}</td></tr>""" for m in mv)
+
+    def example(x, eager):
+        i, t, a, y, at = x
+        src, w, h = painting_thumb(cat[i])
+        name = esc(t)
+        if i in anchors:
+            name = f'<a href="/{GUIDE_SLUG}#{anchors[i]}">{name}</a>'
+        loading = 'fetchpriority="high"' if eager else 'loading="lazy"'
+        museum = f'<br>{esc(at)}' if at else ""
+        return f"""          <figure>
+            <img src="{src}" width="{w}" height="{h}" {loading} decoding="async" alt="{esc(t)} by {esc(a)}, {esc(y)}">
+            <figcaption><strong>{name}</strong><br>{esc(a)}, {esc(y)}{museum}</figcaption>
+          </figure>"""
+
+    blocks = []
+    for n, m in enumerate(mv):
+        if m["ex"]:
+            figs = "\n".join(example(x, n == 0 and k < 2) for k, x in enumerate(m["ex"]))
+            figs = f"""        <div class="examples">
+{figs}
+        </div>"""
+        else:
+            figs = '        <p class="no-ex">Works from this movement are still under copyright, so none are shown here.</p>'
+        wp = ""
+        if m.get("wp"):
+            pg = PAGE_NAMES[m["wp"]]
+            wp = f'\n        <p class="dl"><a href="/{pg["slug"]}" class="more">{esc(pg["crumb"])} wallpapers for iPhone and Mac</a></p>'
+        blocks.append(f"""      <section class="movement" id="{m['slug']}">
+        <h2>{esc(m['name'])}</h2>
+        <p class="meta">{esc(m['dates'])} · {esc(m['where'])}</p>
+        <p>{esc(m['d'])}</p>
+        <p><strong>Key artists:</strong> {esc(m['artists'])}.</p>
+        <p><strong>How to recognize it:</strong> {esc(m['look'])}</p>
+{figs}{wp}
+      </section>""")
+
+    crumbs = [("Daily Canvas", SITE + "/"), ("Art movements", url)]
+    lede = (f"{am.INTRO} Below is a timeline of {len(mv)} movements with their dates, where they "
+            "happened, the artists who defined them, how to recognize them and public-domain examples.")
+    ld = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {"@type": "Article", "@id": url, "url": url, "headline": h1, "name": title,
+             "description": description, "inLanguage": "en", "image": og,
+             "dateModified": datetime.date.today().isoformat(),
+             "isPartOf": {"@id": f"{SITE}/#website"}, "publisher": {"@id": f"{SITE}/#org"},
+             "mainEntity": {"@type": "ItemList", "name": "Art movements", "numberOfItems": len(mv),
+                            "itemListOrder": "https://schema.org/ItemListOrderAscending",
+                            "itemListElement": [
+                                {"@type": "ListItem", "position": n + 1, "url": f"{url}#{m['slug']}",
+                                 "item": {"@type": "DefinedTerm", "name": m["name"],
+                                          "description": f"{m['dates']}, {m['where']}. {m['d']}",
+                                          "inDefinedTermSet": url}}
+                                for n, m in enumerate(mv)]}},
+            {"@type": "BreadcrumbList", "itemListElement": [
+                {"@type": "ListItem", "position": n + 1, "name": nm, "item": u} for n, (nm, u) in enumerate(crumbs)]},
+            {"@type": "FAQPage", "mainEntity": [
+                {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in am.FAQ]},
+        ],
+    }
+    faq_html = "\n".join(f"""      <details>
+        <summary>{esc(q)}</summary>
+        <p>{esc(a)}</p>
+      </details>""" for q, a in am.FAQ)
+    related = "\n".join(f'        <li><a href="/{pg["slug"]}">{esc(pg["h1"])}</a></li>' for pg in PAGES)
+
+    return f"""{head_html(title, description, url, og, ld, og_type="article")}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs"><a href="/">Daily Canvas</a> <span aria-hidden="true">/</span> <span aria-current="page">Art movements</span></p>
+      <h1>{esc(h1)}</h1>
+      <p class="lede">{esc(lede)}</p>
+    </header>
+
+    <section class="timeline" aria-label="Timeline">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Movement</th><th scope="col">Dates</th><th scope="col">Where</th></tr></thead>
+          <tbody>
+{rows}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="movements">
+{chr(10).join(blocks)}
+    </div>
+
+    <section class="band">
+      <h2>See the famous paintings</h2>
+      <p>For the individual masterpieces behind these movements, from the Mona Lisa to The Starry Night, read our guide to <a href="/{GUIDE_SLUG}">47 famous paintings and where to see them</a>.</p>
+    </section>
+
+    <section class="band daily">
+      <h2>A different movement every morning</h2>
+      <p>Daily Canvas sets one painting a day as your wallpaper, chosen from {CATALOG_COUNT} public-domain works in the styles you pick, from Renaissance and Baroque to Impressionism, Japanese prints and early abstraction, and tells you the story behind it. On Mac it changes your desktop by itself; on iPhone a 30-second Shortcuts setup does it each morning. Free, with Pro at $9.99 a year for unlimited shuffles and full-collection search.</p>
+      <a href="{APP_URL}" class="btn btn-large">{APPLE_SVG}<span>Download Daily Canvas</span></a>
+    </section>
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_html}
+    </section>
+
+    <section class="band">
+      <h2>Painting wallpapers</h2>
+      <ul class="related">
+{related}
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
+
 def write_sitemap(slugs):
     today = datetime.date.today().isoformat()
-    urls = ["", *slugs, GUIDE_SLUG, "privacy", "terms"]
+    urls = ["", *slugs, GUIDE_SLUG, MOVEMENTS_SLUG, "privacy", "terms"]
     body = "\n".join(f"  <url>\n    <loc>{SITE}/{u}</loc>\n    <lastmod>{today}</lastmod>\n  </url>" for u in urls)
     with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
         f.write(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{body}\n</urlset>\n')
@@ -603,6 +747,7 @@ def main():
     cat = load_catalog(args.catalog)
     missing = [i for pg in PAGES for i in pg["ids"] if i not in cat]
     missing += [e["id"] for _, _, es in fp.SECTIONS for e in es if e["id"] not in cat]
+    missing += [x[0] for m in am.MOVEMENTS for x in m["ex"] if x[0] not in cat]
     if missing:
         sys.exit(f"Not in catalog: {missing}")
     for pg in PAGES:
@@ -612,6 +757,9 @@ def main():
     with open(os.path.join(ROOT, GUIDE_SLUG + ".html"), "w") as f:
         f.write(guide_html(cat))
     print("wrote", GUIDE_SLUG + ".html")
+    with open(os.path.join(ROOT, MOVEMENTS_SLUG + ".html"), "w") as f:
+        f.write(movements_html(cat))
+    print("wrote", MOVEMENTS_SLUG + ".html")
     write_sitemap([pg["slug"] for pg in PAGES])
     print("wrote sitemap.xml")
 

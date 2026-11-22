@@ -203,3 +203,36 @@ footer .fine { margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-tertiar
     .work { grid-template-columns: 1fr; gap: 1rem; }
     .work img { max-height: 420px; }
 }
+
+/* Art movements guide */
+.timeline { padding-bottom: 1rem; max-width: 900px; }
+.table-wrap { overflow-x: auto; }
+.timeline table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.timeline th, .timeline td { text-align: left; padding: 0.55rem 1rem 0.55rem 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+.timeline thead th { font-size: 0.8125rem; font-weight: 600; color: var(--text-tertiary); }
+.timeline tbody th { font-weight: 600; }
+.timeline tbody th a { text-decoration: none; }
+.timeline tbody th a:hover { color: var(--gold); }
+.timeline td { color: var(--text-secondary); }
+.timeline td:nth-child(2) { white-space: nowrap; }
+
+.movement { border-top: 1px solid var(--border); padding: 2.75rem 0; max-width: 900px; scroll-margin-top: 1rem; }
+.movement h2 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.movement > .meta { color: var(--gold); font-size: 0.9375rem; margin: 0.25rem 0 1rem; }
+.movement > p { max-width: 680px; margin-bottom: 0.75rem; }
+.movement > p strong { font-weight: 600; }
+.movement .no-ex { color: var(--text-tertiary); font-size: 0.875rem; }
+.examples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 1.5rem; align-items: end; }
+.examples img { display: block; width: 100%; height: 200px; object-fit: contain; object-position: left bottom; }
+.examples figcaption { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.45; margin-top: 0.6rem; }
+.examples figcaption strong { color: var(--text-primary); font-weight: 600; }
+.examples figcaption a { text-decoration: none; }
+.examples figcaption a:hover { color: var(--gold); }
+.band p a { color: var(--text-primary); }
+
+@media (max-width: 640px) {
+    .examples { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .examples img { height: 150px; }
+    .timeline td:nth-child(3) { display: none; }
+    .timeline thead th:nth-child(3) { display: none; }
+}
