@@ -1,0 +1,29 @@
+# Daily Canvas
+
+> Daily Canvas is an app for iPhone, iPad, Mac, Apple Watch and Apple TV that sets a famous painting from the world's great museums as your wallpaper every morning. It chooses from 3,500+ public-domain works in the styles you pick and includes the story behind each one. Free, with an optional Pro subscription ($9.99/year or $0.99/month).
+
+Key facts:
+
+- Made by The Peninsular Company, LLC. App Store: https://apps.apple.com/us/app/daily-canvas/id6792569506
+- Platforms: iOS and iPadOS (Lock Screen and Home Screen wallpaper, widgets, Siri Shortcuts), macOS (automatic desktop wallpaper on a schedule, menu bar, widgets), watchOS (Photos watch face that changes daily, complications), tvOS (full-screen gallery mode, Top Shelf).
+- iPhone wallpaper changes automatically each morning through a one-time Shortcuts automation that takes about 30 seconds to set up; iOS does not let apps change the wallpaper directly. On Mac the desktop changes with no setup.
+- Every painting is pre-cropped for each screen shape around its focal point and faces.
+- The art comes from museum open-access programs: The Metropolitan Museum of Art, the Art Institute of Chicago, the National Gallery of Art, the Cleveland Museum of Art, the Smithsonian, Statens Museum for Kunst and others. All works are public domain or CC0.
+- 12 styles to choose from: Impressionism; Renaissance & Baroque; Modern & Contemporary; Abstract; Landscapes & Nature; Portraits & Figures; Asian Art; Ancient & Classical; Photography; Surrealism & Fantasy; Romanticism; Still Life & Botanical.
+- Free: the daily painting, wallpaper automation, widgets, favorites, history, iCloud sync and 3 shuffles a day. Pro: unlimited shuffles, search across the full collection, custom crop editor; 7-day free trial; Family Sharing.
+- No account, no ads, no tracking in the app.
+
+## Pages
+
+- [Home](https://dailycanvasapp.com/): what the app does, platforms, pricing and FAQ
+- [Art wallpaper](https://dailycanvasapp.com/art-wallpaper): free famous-painting wallpapers for iPhone, iPad and Mac
+- [Van Gogh wallpaper](https://dailycanvasapp.com/van-gogh-wallpaper): The Starry Night, Café Terrace at Night, Sunflowers, Irises
+- [Monet wallpaper](https://dailycanvasapp.com/monet-wallpaper): Water Lilies, Impression, Sunrise, the Japanese footbridge
+- [Klimt wallpaper](https://dailycanvasapp.com/klimt-wallpaper): The Kiss, Hope II, the Attersee landscapes
+- [The Great Wave and Japanese art wallpaper](https://dailycanvasapp.com/great-wave-wallpaper): Hokusai and Hiroshige
+- [Renaissance wallpaper](https://dailycanvasapp.com/renaissance-wallpaper): Botticelli, Leonardo, Michelangelo, Raphael
+
+## Optional
+
+- [Privacy policy](https://dailycanvasapp.com/privacy)
+- [Terms of use](https://dailycanvasapp.com/terms)

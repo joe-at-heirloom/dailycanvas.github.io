@@ -1,0 +1,16 @@
+// Static site on Cloudflare Workers (static assets). tools/deploy.sh builds dist/ first.
+// Serves dailycanvasapp.com and www (custom domains; Cloudflare manages their DNS records).
+{
+  "name": "dailycanvas",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "dailycanvasapp.com", "custom_domain": true },
+    { "pattern": "www.dailycanvasapp.com", "custom_domain": true }
+  ]
+}

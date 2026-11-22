@@ -1,0 +1,4 @@
+# Cloudflare Pages already serves /page.html at /page and redirects the .html form.
+/index.html  /  301
+/wallpapers  /art-wallpaper  301
+/wallpaper   /art-wallpaper  301
