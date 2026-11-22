@@ -16,6 +16,8 @@ the CDN's portrait crop and cached in images/wallpapers/.
 It also builds two editorial guides for informational searches, from hand-written entries:
 /famous-paintings ("famous paintings", 157K/mo, KD 9) from tools/famous_paintings.py and
 /art-movements ("art movements", 6.4K/mo, KD 24) from tools/art_movements.py.
+And it builds the artist pages (/artists/, "famous artists" 109K/mo, KD 2, and a page per artist)
+from tools/artists.py, and the museum guides (/museums/) from tools/museums.py.
 
     python3 tools/build_pages.py [--catalog PATH]
 """
@@ -23,8 +25,12 @@ import argparse, datetime, hashlib, html, json, os, re, subprocess, sys
 
 from PIL import Image
 
+from concurrent.futures import ThreadPoolExecutor
+
 import art_movements as am
+import artists as ar
 import famous_paintings as fp
+import museums as mu
 
 SITE = "https://dailycanvasapp.com"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -374,10 +380,13 @@ def page_html(page, cat, all_pages):
         <p>{esc(a)}</p>
       </details>""" for q, a in faq)
 
+    a_page = ARTIST_BY_NAME.get(page.get("artist") or "")
+    more = (f'\n      <p class="dl"><a href="/artists/{a_page["slug"]}" class="more">{esc(a_page["name"])}: life, {a_page.get("works_word", "paintings")} and where to see them</a></p>'
+            if a_page else "")
     bio_html = (f"""
     <section class="band">
       <h2>About {esc(page['artist'])}</h2>
-      <p>{esc(bio)}</p>
+      <p>{esc(bio)}</p>{more}
     </section>""" if bio else "")
 
     return f"""{head_html(page['title'], page['description'], url, og, ld)}
@@ -455,7 +464,7 @@ def head_html(title, description, url, og, ld, og_type="website"):
 
 
 FOOTER = """  <footer>
-    <p><a href="/">Daily Canvas</a> · <a href="/art-wallpaper">Art wallpaper</a> · <a href="/famous-paintings">Famous paintings</a> · <a href="/art-movements">Art movements</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a></p>
+    <p><a href="/">Daily Canvas</a> · <a href="/art-wallpaper">Art wallpaper</a> · <a href="/famous-paintings">Famous paintings</a> · <a href="/art-movements">Art movements</a> · <a href="/artists/">Famous artists</a> · <a href="/museums/">Art museums</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a></p>
     <p class="fine">Images courtesy of the museums named on each painting, from their open-access collections.</p>
   </footer>
 </body>
@@ -497,7 +506,7 @@ def guide_html(cat):
           <img src="{src}" width="{w}" height="{h}" {loading} decoding="async" alt="{esc(e['t'])} by {esc(e['a'])}, {esc(e['y'])}">
           <div>
             <h3><span class="num">{pos}.</span> {esc(e['t'])}</h3>
-            <p class="meta">{esc(e['a'])} · {esc(e['y'])} · {esc(e['m'])}</p>
+            <p class="meta">{artist_link(e['a'])} · {esc(e['y'])} · {esc(e['m'])}</p>
             <p class="meta">{esc(e['at'])}</p>
             <p class="note">{esc(e['n'])}</p>
             <p class="dl"><a href="{esc(p['images']['portrait'])}" download>iPhone wallpaper</a><a href="{esc(p['images']['macLandscape'])}" download>Mac wallpaper</a>{wp_link(e)}</p>
@@ -646,7 +655,7 @@ def movements_html(cat):
         <h2>{esc(m['name'])}</h2>
         <p class="meta">{esc(m['dates'])} · {esc(m['where'])}</p>
         <p>{esc(m['d'])}</p>
-        <p><strong>Key artists:</strong> {esc(m['artists'])}.</p>
+        <p><strong>Key artists:</strong> {esc(m['artists'])}.</p>{movement_artists(m['slug'])}
         <p><strong>How to recognize it:</strong> {esc(m['look'])}</p>
 {figs}{wp}
       </section>""")
@@ -732,9 +741,610 @@ def movements_html(cat):
 {FOOTER}"""
 
 
-def write_sitemap(slugs):
+# ---------------------------------------------------------------------------------------------
+# Artist pages and museum guides
+# ---------------------------------------------------------------------------------------------
+
+RELIABLE = {"met", "aic", "nga", "cleveland", "smithsonian", "smk"}  # records from the museum's own open data
+SOURCE_ORDER = {"aic": 0, "met": 1, "nga": 2, "cleveland": 3, "smithsonian": 4, "smk": 5}
+MAX_WORKS = 20
+FAMOUS = {e["id"]: e for _, _, es in fp.SECTIONS for e in es}
+ARTIST_BY_NAME = {}
+for _a in ar.ARTISTS:
+    for _n in [_a["name"], *_a["names"]]:
+        ARTIST_BY_NAME[_n] = _a
+MOVEMENT_NAMES = {m["slug"]: m["name"] for m in am.MOVEMENTS}
+
+# The catalog's museum names, with the city where it isn't already in the name.
+MUSEUM_DISPLAY = {
+    "The Metropolitan Museum of Art": "The Metropolitan Museum of Art, New York",
+    "Metropolitan Museum of Art": "The Metropolitan Museum of Art, New York",
+    "National Gallery of Art": "National Gallery of Art, Washington, DC",
+    "Smithsonian American Art Museum": "Smithsonian American Art Museum, Washington, DC",
+    "Hirshhorn Museum and Sculpture Garden": "Hirshhorn Museum and Sculpture Garden, Washington, DC",
+    "National Museum of Asian Art": "National Museum of Asian Art, Washington, DC",
+    "Rijksmuseum": "Rijksmuseum, Amsterdam",
+    "Mauritshuis": "Mauritshuis, The Hague",
+    "Gemäldegalerie Alte Meister": "Gemäldegalerie Alte Meister, Dresden",
+    "The Frick Collection": "The Frick Collection, New York",
+    "Galleria Borghese": "Galleria Borghese, Rome",
+    "Uffizi Gallery": "Uffizi Galleries, Florence",
+    "Vatican Museums": "Vatican Museums, Vatican City",
+    "National Gallery of Ireland": "National Gallery of Ireland, Dublin",
+    "Galleria Nazionale d'Arte Antica": "Palazzo Barberini, Rome",
+    "Tate Britain": "Tate Britain, London",
+    "Yale Center for British Art": "Yale Center for British Art, New Haven",
+    "Leopold Museum": "Leopold Museum, Vienna",
+    "Wien Museum": "Wien Museum, Vienna",
+    "Österreichische Galerie Belvedere": "Belvedere, Vienna",
+    "Národní Galerie Praha": "National Gallery Prague",
+    "Private Collection": "Private collection",
+    "Museum of Modern Art": "Museum of Modern Art, New York",
+}
+
+
+def artist_link(name):
+    a = ARTIST_BY_NAME.get(name)
+    return f'<a href="/artists/{a["slug"]}">{esc(name)}</a>' if a else esc(name)
+
+
+def movement_artists(slug):
+    found = [a for a in ar.ARTISTS if slug in a["movements"]]
+    if not found:
+        return ""
+    links = ", ".join(f'<a href="/artists/{a["slug"]}">{esc(a["name"])}</a>' for a in found)
+    return f"\n        <p><strong>Artist pages:</strong> {links}.</p>"
+
+
+def year_key(y):
+    m = re.search(r"\d{4}", y or "")
+    return int(m.group()) if m else 9999
+
+
+def norm_year(y):
+    y = (y or "").strip().strip("()")
+    y = re.sub(r"\s*\(.*$", "", y)          # "1857 (Ansei 4), 2nd month" -> "1857"
+    y = re.sub(r"^ca\.\s*", "c. ", y)
+    if "month" in y and re.search(r"\d{4}", y):   # Japanese print dates: "dated 11th month, Ox year, 1853"
+        y = re.findall(r"\d{4}", y)[-1]
+    return y.replace("-", "–")
+
+
+def lifespan_like(y):
+    ys = [int(v) for v in re.findall(r"\d{4}", y or "")]
+    return len(ys) >= 2 and ys[-1] - ys[0] > 40   # an artist's dates, not a work's
+
+
+def clean_title(p, a):
+    t = a.get("titles", {}).get(p["id"]) or p["title"]
+    t = t.replace("“", "").replace("”", "")
+    t = re.sub(r"\s*\(obverse:[^)]*\)", "", t)
+    t = re.sub(r"\s*\(died[^)]*\)", "", t)
+    t = re.sub(r"\s*\([^)]*\d{4}[^)]*\)", "", t)          # sitters' life dates
+    if a.get("works_word") == "prints":
+        t = re.sub(r"\s*\([^)]*\)", "", t)                  # romanized Japanese titles
+    t = re.sub(r"\s+,", ",", t)
+    return re.sub(r"\s{2,}", " ", t).strip().rstrip(",")
+
+
+def work_info(p, a=None):
+    """Title, year, place and medium for display: hand-checked entries first, then the museum's record."""
+    if p["id"] in FAMOUS:
+        e = FAMOUS[p["id"]]
+        return dict(t=e["t"], y=e["y"], at=e["at"], m=e["m"])
+    if p["id"] in ar.EXTRA:
+        return dict(ar.EXTRA[p["id"]])
+    a = a or ARTIST_BY_NAME.get(p["artist"]["name"], {})
+    medium = p.get("medium") if p["source"] in RELIABLE and not p["source"] == "smk" else None
+    return dict(t=clean_title(p, a), y=norm_year(p.get("year")),
+                at=MUSEUM_DISPLAY.get(p["museum"], p["museum"]),
+                m=(medium[:1].upper() + medium[1:]) if medium else None)
+
+
+def trusted(p):
+    return p["source"] in RELIABLE or p["id"].startswith("wiki-") or p["id"] in FAMOUS or p["id"] in ar.EXTRA
+
+
+def select_works(a, cat):
+    names = set(a["names"])
+    pool = [p for p in cat.values() if p["artist"]["name"] in names and trusted(p)
+            and p["id"] not in a.get("exclude", ())]
+    pool = [p for p in pool if p["id"] in FAMOUS or p["id"] in ar.EXTRA
+            or (p.get("year") and not lifespan_like(p["year"]))]
+    if a.get("max_year"):
+        pool = [p for p in pool if year_key(work_info(p, a)["y"]) <= a["max_year"]]
+    must = {i: n for n, i in enumerate(a["must"])}
+
+    def rank(p):
+        i = p["id"]
+        return (0 if i in must else 1, must.get(i, 0), 0 if i in FAMOUS else 1,
+                0 if p.get("curatorHighlight") else 1, SOURCE_ORDER.get(p["source"], 9), i)
+
+    chosen, keys = [], []
+    for p in sorted(pool, key=rank):
+        info = work_info(p, a)
+        k = (re.sub(r"[^a-z0-9]", "", info["t"].lower()), year_key(info["y"]))
+        if any(k[1] == y and (k[0] == t or (min(len(k[0]), len(t)) >= 20 and (k[0].startswith(t) or t.startswith(k[0]))))
+               for t, y in keys):
+            continue   # the same work from two sources, or two impressions of one print
+        keys.append(k)
+        chosen.append(p)
+        if len(chosen) == MAX_WORKS:
+            break
+    return sorted(chosen, key=lambda p: (year_key(work_info(p, a)["y"]), p["id"]))
+
+
+def lifespan(a):
+    b, d = re.search(r"\d{4}", a["born"]).group(), re.search(r"\d{4}", a["died"]).group()
+    return f"{'c. ' if a['born'].startswith('c.') else ''}{b}–{d}"
+
+
+def faq_block(faq):
+    return "\n".join(f"""      <details>
+        <summary>{esc(q)}</summary>
+        <p>{esc(a)}</p>
+      </details>""" for q, a in faq)
+
+
+def faq_ld(faq):
+    return {"@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]}
+
+
+def crumbs_ld(crumbs):
+    return {"@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": n + 1, "name": nm, "item": u} for n, (nm, u) in enumerate(crumbs)]}
+
+
+def crumbs_html(crumbs):
+    return " <span aria-hidden=\"true\">/</span> ".join(
+        f'<a href="{u.replace(SITE, "") or "/"}">{esc(n)}</a>' if i < len(crumbs) - 1 else f'<span aria-current="page">{esc(n)}</span>'
+        for i, (n, u) in enumerate(crumbs))
+
+
+DAILY_BAND = f"""    <section class="band daily">
+      <h2>A masterpiece on your wallpaper, every morning</h2>
+      <p>Daily Canvas sets one painting a day as your iPhone and Mac wallpaper, chosen from {CATALOG_COUNT} public-domain works in the styles you pick, including every painting on this page, and tells you the story behind it. On Mac it changes your desktop by itself; on iPhone a 30-second Shortcuts setup does it each morning. Free, with Pro at $9.99 a year for unlimited shuffles and full-collection search.</p>
+      <a href="{APP_URL}" class="btn btn-large">{APPLE_SVG}<span>Download Daily Canvas</span></a>
+    </section>"""
+
+
+def unique_ids(titles):
+    seen, out = {}, []
+    for t in titles:
+        base = slugify(t) or "work"
+        seen[base] = seen.get(base, 0) + 1
+        out.append(base if seen[base] == 1 else f"{base}-{seen[base]}")
+    return out
+
+
+def work_card(p, info, anchor, eager, note=None, show_artist=False):
+    src, w, h = painting_thumb(p)
+    loading = 'fetchpriority="high"' if eager else 'loading="lazy"'
+    artist = p["artist"]["name"] if p["id"] not in FAMOUS else FAMOUS[p["id"]]["a"]
+    a_page = ARTIST_BY_NAME.get(artist)
+    shown_artist = a_page["name"] if a_page else artist
+    who = f'{artist_link(shown_artist)} · ' if show_artist else ""
+    guide = (f'<a href="/{GUIDE_SLUG}#{slugify(FAMOUS[p["id"]]["t"])}" class="more">In the famous paintings guide</a>'
+             if p["id"] in FAMOUS else "")
+    note_html = f'\n            <p class="note">{esc(note)}</p>' if note else ""
+    return f"""          <figure class="wcard" id="{anchor}">
+            <img src="{src}" width="{w}" height="{h}" {loading} decoding="async" alt="{esc(info['t'])} by {esc(shown_artist)}, {esc(info['y'])}">
+            <figcaption>
+              <h3>{esc(info['t'])}</h3>
+              <p class="meta">{who}{esc(info['y'])}</p>
+              <p class="meta">{esc(info['at'])}</p>{note_html}
+              <p class="dl"><a href="{esc(p['images']['portrait'])}" download>iPhone</a><a href="{esc(p['images']['macLandscape'])}" download>Mac</a>{guide}</p>
+            </figcaption>
+          </figure>"""
+
+
+def artwork_entry(p, info, artist_name, page_url, anchor, n):
+    src, _, _ = painting_thumb(p)
+    return {"@type": "ListItem", "position": n, "url": f"{page_url}#{anchor}",
+            "item": {"@type": "VisualArtwork", "name": info["t"],
+                     "creator": {"@type": "Person", "name": artist_name},
+                     "dateCreated": info["y"], "artMedium": info.get("m"),
+                     "image": SITE + src, "isPartOf": {"@type": "Museum", "name": info["at"]}
+                     if info["at"] != "Private collection" else None}}
+
+
+def artist_html(a, cat, works):
+    url = f"{SITE}/artists/{a['slug']}"
+    ww = a.get("works_word", "paintings")
+    n = len(works)
+    title = f"{a['name']} {ww.capitalize()}: {n} Works, Life and Where to See Them"
+    h1 = f"{a['name']}: {ww}, life and where to see them"
+    description = (f"{n} {ww} by {a['name']} with their dates and museums, the story of {a['pron']} life, "
+                   f"and where to see {a['pron']} work today.")
+    og = og_image(cat[a["must"][0]], f"artist-{a['slug']}")
+    infos = [work_info(p, a) for p in works]
+    anchors = unique_ids([i["t"] for i in infos])
+    cards = "\n".join(work_card(p, i, an, k < 3) for k, (p, i, an) in enumerate(zip(works, infos, anchors)))
+
+    fam_titles = {e["t"]: slugify(e["t"]) for e in FAMOUS.values() if ARTIST_BY_NAME.get(e["a"]) is a}
+    known = ", ".join(f'<a href="/{GUIDE_SLUG}#{fam_titles[t]}">{esc(t)}</a>' if t in fam_titles else esc(t)
+                      for t in a["known"])
+    movements = ", ".join(f'<a href="/{MOVEMENTS_SLUG}#{m}">{esc(MOVEMENT_NAMES[m])}</a>' for m in a["movements"])
+    wp = PAGE_NAMES[a.get("wp") or HUB_SLUG]
+    wp_label = "Art wallpapers" if wp["slug"] == HUB_SLUG else f"{wp['crumb']} wallpapers"
+
+    counts = {}
+    for i in infos:
+        if i["at"] != "Private collection":
+            counts[i["at"]] = counts.get(i["at"], 0) + 1
+    here = "; ".join(f"{esc(m)} ({c})" for m, c in sorted(counts.items(), key=lambda x: (-x[1], x[0])))
+
+    group = [b for b in ar.ARTISTS if b["group"] == a["group"] and b is not a]
+    related = "\n".join(f'        <li><a href="/artists/{b["slug"]}">{esc(b["name"])}</a></li>' for b in group)
+    related += f'\n        <li><a href="/artists/">All famous artists</a></li>'
+    related += f'\n        <li><a href="/{GUIDE_SLUG}">Famous paintings</a></li>'
+    related += f'\n        <li><a href="/{MOVEMENTS_SLUG}">Art movements</a></li>'
+
+    crumbs = [("Daily Canvas", SITE + "/"), ("Famous artists", f"{SITE}/artists/"), (a["name"], url)]
+    person = {"@type": "Person", "name": a["name"], "birthDate": a["birth"], "deathDate": a["death"],
+              "nationality": a["nationality"], "description": a["lede"], "url": url}
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Article", "@id": url, "url": url, "headline": h1, "name": title, "description": description,
+         "inLanguage": "en", "image": og, "dateModified": datetime.date.today().isoformat(),
+         "isPartOf": {"@id": f"{SITE}/#website"}, "publisher": {"@id": f"{SITE}/#org"}, "about": person,
+         "mainEntity": {"@type": "ItemList", "name": f"{ww.capitalize()} by {a['name']}", "numberOfItems": n,
+                        "itemListElement": [artwork_entry(p, i, a["name"], url, an, k + 1)
+                                            for k, (p, i, an) in enumerate(zip(works, infos, anchors))]}},
+        crumbs_ld(crumbs), faq_ld(a["faq"])]}
+    life = "\n".join(f"      <p>{esc(x)}</p>" for x in a["life"])
+    note = f'\n      <p class="no-ex">{esc(a["note"])}</p>' if a.get("note") else ""
+
+    return f"""{head_html(title, description, url, og, ld, og_type="article")}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs">{crumbs_html(crumbs)}</p>
+      <h1>{esc(h1)}</h1>
+      <p class="lede">{esc(a['lede'])}</p>
+      <dl class="facts">
+        <div><dt>Born</dt><dd>{esc(a['born'])}</dd></div>
+        <div><dt>Died</dt><dd>{esc(a['died'])}</dd></div>
+        <div><dt>Nationality</dt><dd>{esc(a['nationality'])}</dd></div>
+        <div><dt>Movement</dt><dd>{movements}</dd></div>
+        <div><dt>Known for</dt><dd>{known}</dd></div>
+        <div><dt>Wallpapers</dt><dd><a href="/{wp['slug']}">{esc(wp_label)}</a></dd></div>
+      </dl>
+    </header>
+
+    <section class="band">
+      <h2>Life</h2>
+{life}
+    </section>
+
+    <section class="artist-works">
+      <h2>{n} {ww} by {esc(a['short'])}</h2>
+      <p class="era-intro">In date order, with where each one is today. Every one can be downloaded free as an iPhone or Mac wallpaper.</p>
+      <div class="works-grid">
+{cards}
+      </div>{note}
+    </section>
+
+    <section class="band">
+      <h2>Where to see {esc(a['short'])}'s work</h2>
+      <p>{esc(a['see'])}</p>
+      <p class="small">The {ww} on this page: {here}.</p>
+    </section>
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_block(a['faq'])}
+    </section>
+
+{DAILY_BAND}
+
+    <section class="band">
+      <h2>More famous artists</h2>
+      <ul class="related">
+{related}
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
+
+def artists_index_html(cat, picks):
+    url = f"{SITE}/artists/"
+    n = len(ar.ARTISTS)
+    title = f"Famous Artists: {n} Great Painters, Their Lives and Their Paintings"
+    h1 = f"Famous artists: {n} painters everyone should know"
+    description = (f"The world's most famous artists, from Botticelli and Caravaggio to Monet, Van Gogh and Matisse: "
+                   f"{n} great painters with their lives, their best-known paintings and where to see them.")
+    og = og_image(cat["wikimedia-Q45585"], "famous-artists")
+    lede = ("The most famous artists in history include Leonardo da Vinci, Michelangelo, Rembrandt, Vincent van Gogh, "
+            "Claude Monet, Pablo Picasso and Frida Kahlo. This guide covers "
+            f"{n} great painters whose work is in the public domain, from Botticelli and Caravaggio to Monet, Van Gogh "
+            "and Matisse, each with their life, their best-known paintings and where to see them.")
+    groups = []
+    for a in ar.ARTISTS:
+        if a["group"] not in groups:
+            groups.append(a["group"])
+    toc = "\n".join(f'        <li><a href="#{slugify(g)}">{esc(g)}</a></li>' for g in groups)
+    sections = []
+    first = True
+    for g in groups:
+        cards = []
+        for a in sorted([a for a in ar.ARTISTS if a["group"] == g], key=lambda a: year_key(a["born"])):
+            p = cat[a["must"][0]]
+            src, w, h = painting_thumb(p)
+            loading = 'fetchpriority="high"' if first else 'loading="lazy"'
+            first = False
+            mv = ", ".join(MOVEMENT_NAMES[m] for m in a["movements"])
+            known = a["known"]
+            known_s = known[0] if len(known) == 1 else ", ".join(known[:-1]) + " and " + known[-1]
+            cards.append(f"""          <a class="acard" href="/artists/{a['slug']}">
+            <img src="{src}" width="{w}" height="{h}" {loading} decoding="async" alt="{esc(work_info(p, a)['t'])} by {esc(a['name'])}">
+            <span class="aname">{esc(a['name'])}</span>
+            <span class="meta">{esc(lifespan(a))} · {esc(a['nationality'])} · {esc(mv)}</span>
+            <span class="meta">Known for {esc(known_s)}.</span>
+            <span class="meta">{len(picks[a['slug']])} {a.get('works_word', 'paintings')} on this site</span>
+          </a>""")
+        sections.append(f"""    <section class="era" id="{slugify(g)}">
+      <h2>{esc(g)}</h2>
+      <div class="artist-grid">
+{chr(10).join(cards)}
+      </div>
+    </section>""")
+    crumbs = [("Daily Canvas", SITE + "/"), ("Famous artists", url)]
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "CollectionPage", "@id": url, "url": url, "name": title, "description": description, "inLanguage": "en",
+         "isPartOf": {"@id": f"{SITE}/#website"}, "primaryImageOfPage": og,
+         "mainEntity": {"@type": "ItemList", "name": "Famous artists", "numberOfItems": n,
+                        "itemListElement": [{"@type": "ListItem", "position": k + 1, "url": f"{SITE}/artists/{a['slug']}",
+                                             "item": {"@type": "Person", "name": a["name"], "birthDate": a["birth"],
+                                                      "deathDate": a["death"], "nationality": a["nationality"]}}
+                                            for k, a in enumerate(ar.ARTISTS)]}},
+        crumbs_ld(crumbs), faq_ld(ar.INDEX_FAQ)]}
+    return f"""{head_html(title, description, url, og, ld)}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs">{crumbs_html(crumbs)}</p>
+      <h1>{esc(h1)}</h1>
+      <p class="lede">{esc(lede)}</p>
+      <nav class="toc" aria-label="Periods">
+        <ul>
+{toc}
+        </ul>
+      </nav>
+    </header>
+
+{chr(10).join(sections)}
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_block(ar.INDEX_FAQ)}
+    </section>
+
+{DAILY_BAND}
+
+    <section class="band">
+      <h2>More guides</h2>
+      <ul class="related">
+        <li><a href="/{GUIDE_SLUG}">Famous paintings</a></li>
+        <li><a href="/{MOVEMENTS_SLUG}">Art movements</a></li>
+        <li><a href="/museums/">The best art museums in the US</a></li>
+        <li><a href="/{HUB_SLUG}">Art wallpaper</a></li>
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
+
+def linked_see(item):
+    """'Irises (Vincent van Gogh)' with the artist linked when they have a page."""
+    m = re.match(r"^(.*) \(([^)]+)\)$", item)
+    if not m:
+        return esc(item)
+    t, who = m.groups()
+    name = who.split(",")[0]
+    return f"{esc(t)} ({artist_link(name)}{esc(who[len(name):])})" if name in ARTIST_BY_NAME else esc(item)
+
+
+def museums_index_html(cat):
+    url = f"{SITE}/museums/"
+    n = len(mu.MUSEUMS)
+    title = f"The Best Art Museums in the US: {n} to See in Person"
+    h1 = "The best art museums in the US"
+    description = (f"{n} of the best art museums in the US, from the Met and MoMA to the Art Institute of Chicago and "
+                   "the National Gallery of Art: what to see at each one, and which are free.")
+    og = og_image(cat["aic-27992"], "art-museums")
+    lede = (f"{mu.INDEX_INTRO} Here are {n} worth planning a trip around, with what to see at each one and "
+            "which ones are free.")
+    entries = []
+    for k, m in enumerate(mu.MUSEUMS):
+        facts = [m["city"]]
+        if m.get("founded"):
+            facts.append(f"founded {m['founded']}")
+        if m.get("free"):
+            facts.append(m["free"])
+        see = "\n".join(f"          <li>{linked_see(x)}</li>" for x in m["see"])
+        page = (f'<a href="/museums/{m["slug"]}" class="more">Famous paintings at {esc(m["short"])}</a>'
+                if m.get("page") else "")
+        entries.append(f"""      <article class="museum" id="{m['slug']}">
+        <h2><span class="num">{k + 1}.</span> {esc(m['name'])}</h2>
+        <p class="meta">{esc(' · '.join(facts))}</p>
+        <p>{esc(m['why'])}</p>
+        <p class="see-label">What to see:</p>
+        <ul class="see">
+{see}
+        </ul>
+        <p class="dl">{page}<a href="{esc(m['url'])}" rel="noopener">The museum's website</a></p>
+      </article>""")
+    crumbs = [("Daily Canvas", SITE + "/"), ("Art museums", url)]
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Article", "@id": url, "url": url, "headline": h1, "name": title, "description": description,
+         "inLanguage": "en", "image": og, "dateModified": datetime.date.today().isoformat(),
+         "isPartOf": {"@id": f"{SITE}/#website"}, "publisher": {"@id": f"{SITE}/#org"},
+         "mainEntity": {"@type": "ItemList", "name": "Art museums in the US", "numberOfItems": n,
+                        "itemListElement": [{"@type": "ListItem", "position": k + 1, "url": f"{url}#{m['slug']}",
+                                             "item": {"@type": "Museum", "name": m["name"], "url": m["url"],
+                                                      "address": {"@type": "PostalAddress", "addressLocality": m["city"],
+                                                                  "addressCountry": "US"},
+                                                      "isAccessibleForFree": True if m.get("free") == "Free" else None}}
+                                            for k, m in enumerate(mu.MUSEUMS)]}},
+        crumbs_ld(crumbs), faq_ld(mu.INDEX_FAQ)]}
+    return f"""{head_html(title, description, url, og, ld, og_type="article")}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs">{crumbs_html(crumbs)}</p>
+      <h1>{esc(h1)}</h1>
+      <p class="lede">{esc(lede)}</p>
+    </header>
+
+    <div class="museums">
+{chr(10).join(entries)}
+    </div>
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_block(mu.INDEX_FAQ)}
+    </section>
+
+{DAILY_BAND}
+
+    <section class="band">
+      <h2>More guides</h2>
+      <ul class="related">
+        <li><a href="/artists/">Famous artists</a></li>
+        <li><a href="/{GUIDE_SLUG}">Famous paintings</a></li>
+        <li><a href="/{MOVEMENTS_SLUG}">Art movements</a></li>
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
+
+def museum_html(m, pg, cat):
+    url = f"{SITE}/museums/{m['slug']}"
+    works = [(cat[i], note) for i, note in pg["highlights"]]
+    og = og_image(works[0][0], f"museum-{m['slug']}")
+    description = pg["answer"]
+    if len(description) > 160:
+        description = description[:description.rfind(",", 0, 157)] + "."
+    infos = [work_info(p) for p, _ in works]
+    anchors = unique_ids([i["t"] for i in infos])
+    cards = "\n".join(work_card(p, i, an, k < 3, note=note, show_artist=True)
+                      for k, ((p, note), i, an) in enumerate(zip(works, infos, anchors)))
+    here = []
+    for p, _ in works:
+        name = FAMOUS[p["id"]]["a"] if p["id"] in FAMOUS else p["artist"]["name"]
+        a = ARTIST_BY_NAME.get(name)
+        if a and a not in here:
+            here.append(a)
+    here_html = ", ".join(f'<a href="/artists/{a["slug"]}">{esc(a["name"])}</a>' for a in here)
+    admission = m.get("free") or "Ticketed; see the museum's website"
+    others = [x for x in mu.MUSEUMS if x.get("page") and x is not m]
+    related = "\n".join(f'        <li><a href="/museums/{x["slug"]}">Famous paintings at {esc(x["short"])}</a></li>' for x in others)
+    related += '\n        <li><a href="/museums/">The best art museums in the US</a></li>'
+    related += f'\n        <li><a href="/artists/">Famous artists</a></li>'
+    crumbs = [("Daily Canvas", SITE + "/"), ("Art museums", f"{SITE}/museums/"), (m["name"], url)]
+    museum = {"@type": "Museum", "name": m["name"], "url": m["url"],
+              "address": {"@type": "PostalAddress", "addressLocality": m["city"], "addressCountry": "US"},
+              "foundingDate": m.get("founded"), "isAccessibleForFree": True if m.get("free") == "Free" else None}
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Article", "@id": url, "url": url, "headline": pg["h1"], "name": pg["title"], "description": description,
+         "inLanguage": "en", "image": og, "dateModified": datetime.date.today().isoformat(),
+         "isPartOf": {"@id": f"{SITE}/#website"}, "publisher": {"@id": f"{SITE}/#org"}, "about": museum,
+         "mainEntity": {"@type": "ItemList", "name": pg["h1"], "numberOfItems": len(works),
+                        "itemListElement": [artwork_entry(p, i, FAMOUS[p["id"]]["a"] if p["id"] in FAMOUS else p["artist"]["name"],
+                                                          url, an, k + 1)
+                                            for k, ((p, _), i, an) in enumerate(zip(works, infos, anchors))]}},
+        crumbs_ld(crumbs), faq_ld(pg["faq"])]}
+    intro = "\n".join(f"      <p>{esc(x)}</p>" for x in pg["intro"])
+    return f"""{head_html(pg['title'], description, url, og, ld, og_type="article")}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs">{crumbs_html(crumbs)}</p>
+      <h1>{esc(pg['h1'])}</h1>
+      <p class="lede">{esc(pg['answer'])}</p>
+      <dl class="facts">
+        <div><dt>City</dt><dd>{esc(m['city'])}</dd></div>
+        <div><dt>Founded</dt><dd>{esc(m['founded'])}</dd></div>
+        <div><dt>Admission</dt><dd>{esc(admission)}</dd></div>
+        <div><dt>Website</dt><dd><a href="{esc(m['url'])}" rel="noopener">{esc(m['url'].replace('https://', '').replace('www.', ''))}</a></dd></div>
+      </dl>
+    </header>
+
+    <section class="band">
+      <h2>About the museum</h2>
+{intro}
+    </section>
+
+    <section class="artist-works">
+      <h2>{len(works)} paintings to see</h2>
+      <p class="era-intro">Each can be downloaded free as an iPhone or Mac wallpaper. Displays change, so check the museum's site for what's on view.</p>
+      <div class="works-grid">
+{cards}
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>Artists here with their own pages</h2>
+      <p>{here_html}.</p>
+    </section>
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_block(pg['faq'])}
+    </section>
+
+{DAILY_BAND}
+
+    <section class="band">
+      <h2>More museum guides</h2>
+      <ul class="related">
+{related}
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
+
+def write_artists_and_museums(cat):
+    """Writes artists/ and museums/ and returns their sitemap paths."""
+    picks = {a["slug"]: select_works(a, cat) for a in ar.ARTISTS}
+    ids = {p["id"] for ws in picks.values() for p in ws}
+    ids |= {i for pg in mu.PAGES.values() for i, _ in pg["highlights"]}
+    with ThreadPoolExecutor(12) as pool:        # the first build fetches a few hundred display images
+        list(pool.map(lambda i: painting_thumb(cat[i]), sorted(ids)))
+    paths = []
+    os.makedirs(os.path.join(ROOT, "artists"), exist_ok=True)
+    os.makedirs(os.path.join(ROOT, "museums"), exist_ok=True)
+    with open(os.path.join(ROOT, "artists", "index.html"), "w") as f:
+        f.write(artists_index_html(cat, picks))
+    paths.append("artists/")
+    for a in ar.ARTISTS:
+        with open(os.path.join(ROOT, "artists", a["slug"] + ".html"), "w") as f:
+            f.write(artist_html(a, cat, picks[a["slug"]]))
+        paths.append(f"artists/{a['slug']}")
+    with open(os.path.join(ROOT, "museums", "index.html"), "w") as f:
+        f.write(museums_index_html(cat))
+    paths.append("museums/")
+    by_slug = {m["slug"]: m for m in mu.MUSEUMS}
+    for slug, pg in mu.PAGES.items():
+        with open(os.path.join(ROOT, "museums", slug + ".html"), "w") as f:
+            f.write(museum_html(by_slug[slug], pg, cat))
+        paths.append(f"museums/{slug}")
+    print(f"wrote artists/ ({len(ar.ARTISTS)} artists, {sum(len(w) for w in picks.values())} works) "
+          f"and museums/ ({len(mu.PAGES)} pages)")
+    return paths
+
+
+def write_sitemap(slugs, extra=()):
     today = datetime.date.today().isoformat()
-    urls = ["", *slugs, GUIDE_SLUG, MOVEMENTS_SLUG, "privacy", "terms"]
+    urls = ["", *slugs, GUIDE_SLUG, MOVEMENTS_SLUG, *extra, "privacy", "terms"]
     body = "\n".join(f"  <url>\n    <loc>{SITE}/{u}</loc>\n    <lastmod>{today}</lastmod>\n  </url>" for u in urls)
     with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
         f.write(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{body}\n</urlset>\n')
@@ -748,6 +1358,8 @@ def main():
     missing = [i for pg in PAGES for i in pg["ids"] if i not in cat]
     missing += [e["id"] for _, _, es in fp.SECTIONS for e in es if e["id"] not in cat]
     missing += [x[0] for m in am.MOVEMENTS for x in m["ex"] if x[0] not in cat]
+    missing += [i for a in ar.ARTISTS for i in a["must"] if i not in cat]
+    missing += [i for pg in mu.PAGES.values() for i, _ in pg["highlights"] if i not in cat]
     if missing:
         sys.exit(f"Not in catalog: {missing}")
     for pg in PAGES:
@@ -760,7 +1372,8 @@ def main():
     with open(os.path.join(ROOT, MOVEMENTS_SLUG + ".html"), "w") as f:
         f.write(movements_html(cat))
     print("wrote", MOVEMENTS_SLUG + ".html")
-    write_sitemap([pg["slug"] for pg in PAGES])
+    extra = write_artists_and_museums(cat)
+    write_sitemap([pg["slug"] for pg in PAGES], extra)
     print("wrote sitemap.xml")
 
 
