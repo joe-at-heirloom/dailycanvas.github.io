@@ -13,11 +13,16 @@ Titles, dates, museums, licenses and download links come from curated_catalog.js
 the pages never promise a painting the app doesn't have. Preview thumbnails are made from
 the CDN's portrait crop and cached in images/wallpapers/.
 
+It also builds /famous-paintings, an editorial guide for the informational search "famous
+paintings" (157K/mo, KD 9), from the hand-written entries in tools/famous_paintings.py.
+
     python3 tools/build_pages.py [--catalog PATH]
 """
-import argparse, datetime, html, json, os, subprocess, sys
+import argparse, datetime, html, json, os, re, subprocess, sys
 
 from PIL import Image
+
+import famous_paintings as fp
 
 SITE = "https://dailycanvasapp.com"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -224,6 +229,22 @@ def thumb(p):
         return "/" + rel, im.width, im.height
 
 
+def painting_thumb(p):
+    """The whole painting (not a wallpaper crop), longest side 640px, for the guide."""
+    rel = f"images/paintings/{p['id']}.jpg"
+    out = os.path.join(ROOT, rel)
+    if not os.path.exists(out):
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        tmp = out + ".full"
+        fetch(p["images"]["display"], tmp)
+        with Image.open(tmp) as im:
+            im.thumbnail((640, 640), Image.LANCZOS)
+            save_jpeg(im, out, 74)
+        os.remove(tmp)
+    with Image.open(out) as im:
+        return "/" + rel, im.width, im.height
+
+
 def og_image(p, slug):
     rel = f"images/og/{slug}.jpg"
     out = os.path.join(ROOT, rel)
@@ -357,37 +378,7 @@ def page_html(page, cat, all_pages):
       <p>{esc(bio)}</p>
     </section>""" if bio else "")
 
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    {GA}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{esc(page['title'])}</title>
-    <meta name="description" content="{esc(page['description'])}">
-    <link rel="canonical" href="{url}">
-    <meta name="theme-color" content="#0A0A0A">
-    <meta name="apple-itunes-app" content="app-id=6792569506">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Daily Canvas">
-    <meta property="og:url" content="{url}">
-    <meta property="og:title" content="{esc(page['title'])}">
-    <meta property="og:description" content="{esc(page['description'])}">
-    <meta property="og:image" content="{og}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
-    <link rel="preconnect" href="https://cdn.dailycanvasapp.com">
-    <link rel="stylesheet" href="/wallpapers.css">
-    <script type="application/ld+json">{json.dumps(clean(ld), ensure_ascii=False)}</script>
-</head>
-<body>
-  <nav>
-    <a href="/" class="nav-logo">{LOGO_SVG}Daily Canvas</a>
-    <a href="{APP_URL}" class="btn">{APPLE_SVG}<span>App Store</span></a>
-  </nav>
+    return f"""{head_html(page['title'], page['description'], url, og, ld)}
 
   <main>
     <header class="intro">
@@ -419,18 +410,187 @@ def page_html(page, cat, all_pages):
     </section>
   </main>
 
-  <footer>
-    <p><a href="/">Daily Canvas</a> · <a href="/art-wallpaper">Art wallpaper</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a></p>
+{FOOTER}"""
+
+
+def head_html(title, description, url, og, ld, og_type="website"):
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {GA}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{esc(title)}</title>
+    <meta name="description" content="{esc(description)}">
+    <link rel="canonical" href="{url}">
+    <meta name="theme-color" content="#0A0A0A">
+    <meta name="apple-itunes-app" content="app-id=6792569506">
+    <meta property="og:type" content="{og_type}">
+    <meta property="og:site_name" content="Daily Canvas">
+    <meta property="og:url" content="{url}">
+    <meta property="og:title" content="{esc(title)}">
+    <meta property="og:description" content="{esc(description)}">
+    <meta property="og:image" content="{og}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="preconnect" href="https://cdn.dailycanvasapp.com">
+    <link rel="stylesheet" href="/wallpapers.css">
+    <script type="application/ld+json">{json.dumps(clean(ld), ensure_ascii=False)}</script>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">{LOGO_SVG}Daily Canvas</a>
+    <a href="{APP_URL}" class="btn">{APPLE_SVG}<span>App Store</span></a>
+  </nav>"""
+
+
+FOOTER = """  <footer>
+    <p><a href="/">Daily Canvas</a> · <a href="/art-wallpaper">Art wallpaper</a> · <a href="/famous-paintings">Famous paintings</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@dailycanvasapp.com">Support</a></p>
     <p class="fine">Images courtesy of the museums named on each painting, from their open-access collections.</p>
   </footer>
 </body>
 </html>
 """
 
+GUIDE_SLUG = "famous-paintings"
+PAGE_NAMES = {pg["slug"]: pg for pg in PAGES}
+
+
+def slugify(s):
+    s = html.unescape(s).lower().replace("'", "")
+    s = s.translate(str.maketrans("àáâäãåçèéêëìíîïñòóôöõùúûüý", "aaaaaaceeeeiiiinooooouuuuy"))
+    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
+
+def guide_html(cat):
+    url = f"{SITE}/{GUIDE_SLUG}"
+    entries = [e for _, _, es in fp.SECTIONS for e in es]
+    n_works = len(entries)
+    title = f"Famous Paintings: {n_works} Masterpieces and Where to See Them"
+    h1 = f"Famous paintings: {n_works} masterpieces everyone should know"
+    description = (f"The world's most famous paintings, from the Mona Lisa to The Starry Night: {n_works} "
+                   "masterpieces with the artist, date, museum and the story behind each one.")
+    og = og_image(cat["wikimedia-Q12418"], GUIDE_SLUG)
+
+    def wp_link(e):
+        slug = e.get("wp", HUB_SLUG)
+        pg = PAGE_NAMES[slug]
+        label = "More art wallpapers" if slug == HUB_SLUG else f"More {pg['crumb']} wallpapers"
+        return f'<a href="/{slug}" class="more">{esc(label)}</a>'
+
+    def work(e, pos):
+        p = cat[e["id"]]
+        src, w, h = painting_thumb(p)
+        anchor = slugify(e["t"])
+        loading = 'fetchpriority="high"' if pos <= 2 else 'loading="lazy"'
+        return f"""        <article class="work" id="{anchor}">
+          <img src="{src}" width="{w}" height="{h}" {loading} decoding="async" alt="{esc(e['t'])} by {esc(e['a'])}, {esc(e['y'])}">
+          <div>
+            <h3><span class="num">{pos}.</span> {esc(e['t'])}</h3>
+            <p class="meta">{esc(e['a'])} · {esc(e['y'])} · {esc(e['m'])}</p>
+            <p class="meta">{esc(e['at'])}</p>
+            <p class="note">{esc(e['n'])}</p>
+            <p class="dl"><a href="{esc(p['images']['portrait'])}" download>iPhone wallpaper</a><a href="{esc(p['images']['macLandscape'])}" download>Mac wallpaper</a>{wp_link(e)}</p>
+          </div>
+        </article>"""
+
+    pos = 0
+    sections, toc = [], []
+    for heading, intro, es in fp.SECTIONS:
+        sid = slugify(heading.split(",")[0])
+        toc.append(f'        <li><a href="#{sid}">{esc(heading)}</a></li>')
+        items = []
+        for e in es:
+            pos += 1
+            items.append(work(e, pos))
+        sections.append(f"""    <section class="era" id="{sid}">
+      <h2>{esc(heading)}</h2>
+      <p class="era-intro">{esc(intro)}</p>
+{chr(10).join(items)}
+    </section>""")
+
+    crumbs = [("Daily Canvas", SITE + "/"), ("Famous paintings", url)]
+    lede = (f"{fp.INTRO} Below are {n_works} of the world's most famous paintings in date order: who painted each one, when, where you can see it today and why it "
+            "matters. Every one is in the public domain, so each also comes as a free iPhone and Mac wallpaper.")
+
+    def artwork(e, n):
+        p = cat[e["id"]]
+        src, _, _ = painting_thumb(p)
+        return {"@type": "ListItem", "position": n, "url": f"{url}#{slugify(e['t'])}",
+                "item": {"@type": "VisualArtwork", "name": e["t"],
+                         "creator": {"@type": "Person", "name": e["a"]},
+                         "dateCreated": e["y"], "artMedium": e["m"],
+                         "artform": "Print" if "print" in e["m"].lower() else "Painting",
+                         "image": SITE + src, "description": e["n"],
+                         "isPartOf": {"@type": "Museum", "name": e["at"]}}}
+
+    ld = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {"@type": "Article", "@id": url, "url": url, "headline": h1, "name": title,
+             "description": description, "inLanguage": "en", "image": og,
+             "dateModified": datetime.date.today().isoformat(),
+             "isPartOf": {"@id": f"{SITE}/#website"},
+             "publisher": {"@id": f"{SITE}/#org"},
+             "mainEntity": {"@type": "ItemList", "name": "Famous paintings", "numberOfItems": n_works,
+                            "itemListOrder": "https://schema.org/ItemListOrderAscending",
+                            "itemListElement": [artwork(e, n + 1) for n, e in enumerate(entries)]}},
+            {"@type": "BreadcrumbList", "itemListElement": [
+                {"@type": "ListItem", "position": n + 1, "name": nm, "item": u} for n, (nm, u) in enumerate(crumbs)]},
+            {"@type": "FAQPage", "mainEntity": [
+                {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in fp.FAQ]},
+        ],
+    }
+    faq_html = "\n".join(f"""      <details>
+        <summary>{esc(q)}</summary>
+        <p>{esc(a)}</p>
+      </details>""" for q, a in fp.FAQ)
+    related = "\n".join(f'        <li><a href="/{pg["slug"]}">{esc(pg["h1"])}</a></li>' for pg in PAGES)
+
+    return f"""{head_html(title, description, url, og, ld, og_type="article")}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs"><a href="/">Daily Canvas</a> <span aria-hidden="true">/</span> <span aria-current="page">Famous paintings</span></p>
+      <h1>{esc(h1)}</h1>
+      <p class="lede">{esc(lede)}</p>
+      <nav class="toc" aria-label="Periods">
+        <ul>
+{chr(10).join(toc)}
+        </ul>
+      </nav>
+    </header>
+
+{chr(10).join(sections)}
+
+    <section class="band daily">
+      <h2>See a different masterpiece every morning</h2>
+      <p>Daily Canvas sets one painting a day as your wallpaper, chosen from {CATALOG_COUNT} public-domain works including every painting on this page, and tells you the story behind it. On Mac it changes your desktop by itself; on iPhone a 30-second Shortcuts setup does it each morning. Free, with Pro at $9.99 a year for unlimited shuffles and full-collection search.</p>
+      <a href="{APP_URL}" class="btn btn-large">{APPLE_SVG}<span>Download Daily Canvas</span></a>
+    </section>
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_html}
+    </section>
+
+    <section class="band">
+      <h2>Painting wallpapers</h2>
+      <ul class="related">
+{related}
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
 
 def write_sitemap(slugs):
     today = datetime.date.today().isoformat()
-    urls = ["", *slugs, "privacy", "terms"]
+    urls = ["", *slugs, GUIDE_SLUG, "privacy", "terms"]
     body = "\n".join(f"  <url>\n    <loc>{SITE}/{u}</loc>\n    <lastmod>{today}</lastmod>\n  </url>" for u in urls)
     with open(os.path.join(ROOT, "sitemap.xml"), "w") as f:
         f.write(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{body}\n</urlset>\n')
@@ -442,12 +602,16 @@ def main():
     args = ap.parse_args()
     cat = load_catalog(args.catalog)
     missing = [i for pg in PAGES for i in pg["ids"] if i not in cat]
+    missing += [e["id"] for _, _, es in fp.SECTIONS for e in es if e["id"] not in cat]
     if missing:
         sys.exit(f"Not in catalog: {missing}")
     for pg in PAGES:
         with open(os.path.join(ROOT, pg["slug"] + ".html"), "w") as f:
             f.write(page_html(pg, cat, PAGES))
         print("wrote", pg["slug"] + ".html")
+    with open(os.path.join(ROOT, GUIDE_SLUG + ".html"), "w") as f:
+        f.write(guide_html(cat))
+    print("wrote", GUIDE_SLUG + ".html")
     write_sitemap([pg["slug"] for pg in PAGES])
     print("wrote sitemap.xml")
 

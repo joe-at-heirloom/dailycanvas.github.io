@@ -16,6 +16,7 @@ Key facts:
 ## Pages
 
 - [Home](https://dailycanvasapp.com/): what the app does, platforms, pricing and FAQ
+- [Famous paintings](https://dailycanvasapp.com/famous-paintings): guide to 47 of the world's most famous paintings, from the Mona Lisa to The Starry Night, with artist, date, medium, museum and a short factual note on each
 - [Art wallpaper](https://dailycanvasapp.com/art-wallpaper): free famous-painting wallpapers for iPhone, iPad and Mac
 - [Van Gogh wallpaper](https://dailycanvasapp.com/van-gogh-wallpaper): The Starry Night, Café Terrace at Night, Sunflowers, Irises
 - [Monet wallpaper](https://dailycanvasapp.com/monet-wallpaper): Water Lilies, Impression, Sunrise, the Japanese footbridge
