@@ -17,7 +17,8 @@ It also builds two editorial guides for informational searches, from hand-writte
 /famous-paintings ("famous paintings", 157K/mo, KD 9) from tools/famous_paintings.py and
 /art-movements ("art movements", 6.4K/mo, KD 24) from tools/art_movements.py.
 And it builds the artist pages (/artists/, "famous artists" 109K/mo, KD 2, and a page per artist)
-from tools/artists.py, and the museum guides (/museums/) from tools/museums.py.
+from tools/artists.py, the museum guides (/museums/) from tools/museums.py, and the period pages
+(/art-movements/<slug>) from tools/periods.py.
 
     python3 tools/build_pages.py [--catalog PATH]
 """
@@ -31,6 +32,7 @@ import art_movements as am
 import artists as ar
 import famous_paintings as fp
 import museums as mu
+import periods as pe
 
 SITE = "https://dailycanvasapp.com"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -657,7 +659,7 @@ def movements_html(cat):
         <p>{esc(m['d'])}</p>
         <p><strong>Key artists:</strong> {esc(m['artists'])}.</p>{movement_artists(m['slug'])}
         <p><strong>How to recognize it:</strong> {esc(m['look'])}</p>
-{figs}{wp}
+{figs}{wp}{period_link(m)}
       </section>""")
 
     crumbs = [("Daily Canvas", SITE + "/"), ("Art movements", url)]
@@ -754,6 +756,7 @@ for _a in ar.ARTISTS:
     for _n in [_a["name"], *_a["names"]]:
         ARTIST_BY_NAME[_n] = _a
 MOVEMENT_NAMES = {m["slug"]: m["name"] for m in am.MOVEMENTS}
+TITLES = {**{i: t for a in ar.ARTISTS for i, t in a.get("titles", {}).items()}, **pe.TITLES}
 
 # The catalog's museum names, with the city where it isn't already in the name.
 MUSEUM_DISPLAY = {
@@ -816,8 +819,9 @@ def lifespan_like(y):
 
 
 def clean_title(p, a):
-    t = a.get("titles", {}).get(p["id"]) or p["title"]
+    t = a.get("titles", {}).get(p["id"]) or TITLES.get(p["id"]) or p["title"]
     t = t.replace("“", "").replace("”", "")
+    t = re.sub(r"\s*\[(obverse|reverse)\]", "", t)
     t = re.sub(r"\s*\(obverse:[^)]*\)", "", t)
     t = re.sub(r"\s*\(died[^)]*\)", "", t)
     t = re.sub(r"\s*\([^)]*\d{4}[^)]*\)", "", t)          # sitters' life dates
@@ -918,10 +922,10 @@ def unique_ids(titles):
     return out
 
 
-def work_card(p, info, anchor, eager, note=None, show_artist=False):
+def work_card(p, info, anchor, eager, note=None, show_artist=False, artist_name=None):
     src, w, h = painting_thumb(p)
     loading = 'fetchpriority="high"' if eager else 'loading="lazy"'
-    artist = p["artist"]["name"] if p["id"] not in FAMOUS else FAMOUS[p["id"]]["a"]
+    artist = artist_name or (p["artist"]["name"] if p["id"] not in FAMOUS else FAMOUS[p["id"]]["a"])
     a_page = ARTIST_BY_NAME.get(artist)
     shown_artist = a_page["name"] if a_page else artist
     who = f'{artist_link(shown_artist)} · ' if show_artist else ""
@@ -965,7 +969,7 @@ def artist_html(a, cat, works):
     fam_titles = {e["t"]: slugify(e["t"]) for e in FAMOUS.values() if ARTIST_BY_NAME.get(e["a"]) is a}
     known = ", ".join(f'<a href="/{GUIDE_SLUG}#{fam_titles[t]}">{esc(t)}</a>' if t in fam_titles else esc(t)
                       for t in a["known"])
-    movements = ", ".join(f'<a href="/{MOVEMENTS_SLUG}#{m}">{esc(MOVEMENT_NAMES[m])}</a>' for m in a["movements"])
+    movements = ", ".join(f'<a href="{movement_href(m)}">{esc(MOVEMENT_NAMES[m])}</a>' for m in a["movements"])
     wp = PAGE_NAMES[a.get("wp") or HUB_SLUG]
     wp_label = "Art wallpapers" if wp["slug"] == HUB_SLUG else f"{wp['crumb']} wallpapers"
 
@@ -1312,6 +1316,198 @@ def museum_html(m, pg, cat):
 {FOOTER}"""
 
 
+PERIOD_BY_SLUG = {pd["slug"]: pd for pd in pe.PERIODS}
+BAD_IMAGES = ({i for a in ar.ARTISTS for i in a.get("exclude", ())} | {i for pd in pe.PERIODS for i in pd.get("exclude", ())}
+              | set(pe.CROPPED))
+MAX_PERIOD_WORKS = 24
+
+
+def movement_href(slug):
+    return f"/{MOVEMENTS_SLUG}/{slug}" if slug in PERIOD_BY_SLUG else f"/{MOVEMENTS_SLUG}#{slug}"
+
+
+def period_link(m):
+    if m["slug"] not in PERIOD_BY_SLUG:
+        return ""
+    label = PERIOD_BY_SLUG[m["slug"]]["works_label"]
+    return f'\n        <p class="dl"><a href="/{MOVEMENTS_SLUG}/{m["slug"]}" class="more">{esc(m["name"])}: more {esc(label)}, the artists and the history</a></p>'
+
+
+def select_period_works(pd, cat):
+    """The movement's best-known works first, then one work per artist in turn, key artists first."""
+    lo, hi = pd["window"]
+    names = {}
+    for disp, cat_names in pd["artists"]:
+        for n in cat_names:
+            names[n] = disp
+    shim = {"works_word": "prints"} if pd.get("prints") else {}
+    by_artist = {disp: [] for disp, _ in pd["artists"]}
+    for p in cat.values():
+        disp = names.get(p["artist"]["name"])
+        if not disp or not trusted(p) or p["id"] in BAD_IMAGES:
+            continue
+        if pd.get("skip_titles") and re.search(pd["skip_titles"], p["title"]):
+            continue
+        info = work_info(p, shim)
+        yk = year_key(info["y"])
+        w_lo, w_hi = pd.get("windows", {}).get(disp, (lo, hi))
+        if yk == 9999 or not (max(lo, w_lo) <= yk <= min(hi, w_hi)):
+            continue
+        if p["id"] not in FAMOUS and p["id"] not in ar.EXTRA and lifespan_like(p.get("year")):
+            continue
+        by_artist[disp].append(p)
+    must = {i: n for n, i in enumerate(pd["must"])}
+
+    def rank(p):
+        i = p["id"]
+        return (0 if i in must else 1, must.get(i, 0), 0 if i in FAMOUS else 1,
+                0 if p.get("curatorHighlight") else 1, SOURCE_ORDER.get(p["source"], 9), i)
+
+    for disp in by_artist:
+        by_artist[disp].sort(key=rank)
+    chosen, keys, owner = [], [], {}
+
+    def take(p, disp):
+        info = work_info(p, shim)
+        k = (re.sub(r"[^a-z0-9]", "", info["t"].lower()), year_key(info["y"]))
+        if p["id"] in owner or any(k[1] == y and (k[0] == t or (min(len(k[0]), len(t)) >= 20 and (k[0].startswith(t) or t.startswith(k[0]))))
+                                   for t, y in keys):
+            return False
+        keys.append(k)
+        chosen.append(p)
+        owner[p["id"]] = disp
+        return True
+
+    for i in pd["must"]:
+        for disp, ws in by_artist.items():
+            if any(p["id"] == i for p in ws):
+                take(cat[i], disp)
+    queues = {disp: list(ws) for disp, ws in by_artist.items()}
+    caps = pd.get("caps", {})
+    while len(chosen) < MAX_PERIOD_WORKS and any(queues.values()):
+        for disp, _ in pd["artists"]:
+            q = queues[disp]
+            if disp in caps and sum(1 for d in owner.values() if d == disp) >= caps[disp]:
+                q.clear()
+            while q and not take(q.pop(0), disp):
+                pass
+            if len(chosen) >= MAX_PERIOD_WORKS:
+                break
+    chosen.sort(key=lambda p: (year_key(work_info(p, shim)["y"]), p["id"]))
+    return [(p, owner[p["id"]]) for p in chosen]
+
+
+def period_html(pd, cat, works):
+    m = next(x for x in am.MOVEMENTS if x["slug"] == pd["slug"])
+    url = f"{SITE}/{MOVEMENTS_SLUG}/{pd['slug']}"
+    shim = {"works_word": "prints"} if pd.get("prints") else {}
+    n = len(works)
+    description = pd["lede"] if len(pd["lede"]) <= 160 else pd["lede"][:pd["lede"].rfind(" ", 0, 156)].rstrip(",;:") + "…"
+    og = og_image(works[0][0] if not pd["must"] else cat[pd["must"][0]], f"period-{pd['slug']}")
+    infos = [work_info(p, shim) for p, _ in works]
+    anchors = unique_ids([i["t"] for i in infos])
+    cards = "\n".join(work_card(p, i, an, k < 3, show_artist=True, artist_name=disp)
+                      for k, ((p, disp), i, an) in enumerate(zip(works, infos, anchors)))
+
+    order = [x["slug"] for x in am.MOVEMENTS]
+    k = order.index(pd["slug"])
+    def neighbor(label, j):
+        if 0 <= j < len(order):
+            x = am.MOVEMENTS[j]
+            return f'\n        <div><dt>{label}</dt><dd><a href="{movement_href(x["slug"])}">{esc(x["name"])}</a></dd></div>'
+        return ""
+    key_artists = ", ".join(artist_link(a.strip()) for a in m["artists"].split(","))
+
+    present = []
+    for _, disp in works:
+        if disp not in present:
+            present.append(disp)
+    artists_line = ", ".join(artist_link(d) for d in present)
+
+    related = [x for x in pe.PERIODS if x is not pd]
+    related_html = "\n".join(f'        <li><a href="/{MOVEMENTS_SLUG}/{x["slug"]}">{esc(next(y["name"] for y in am.MOVEMENTS if y["slug"] == x["slug"]))}</a></li>' for x in related)
+    related_html += f'\n        <li><a href="/{MOVEMENTS_SLUG}">All art movements</a></li>'
+
+    crumbs = [("Daily Canvas", SITE + "/"), ("Art movements", f"{SITE}/{MOVEMENTS_SLUG}"), (m["name"], url)]
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "Article", "@id": url, "url": url, "headline": pd["h1"], "name": pd["title"], "description": description,
+         "inLanguage": "en", "image": og, "dateModified": datetime.date.today().isoformat(),
+         "isPartOf": {"@id": f"{SITE}/#website"}, "publisher": {"@id": f"{SITE}/#org"},
+         "about": {"@type": "DefinedTerm", "name": m["name"], "description": pd["lede"],
+                   "inDefinedTermSet": f"{SITE}/{MOVEMENTS_SLUG}"},
+         "mainEntity": {"@type": "ItemList", "name": pd["works_label"].capitalize(), "numberOfItems": n,
+                        "itemListElement": [artwork_entry(p, i, disp, url, an, j + 1)
+                                            for j, ((p, disp), i, an) in enumerate(zip(works, infos, anchors))]}},
+        crumbs_ld(crumbs), faq_ld(pd["faq"])]}
+    history = "\n".join(f"      <p>{esc(x)}</p>" for x in pd["history"])
+
+    return f"""{head_html(pd['title'], description, url, og, ld, og_type="article")}
+
+  <main class="guide">
+    <header class="intro">
+      <p class="crumbs">{crumbs_html(crumbs)}</p>
+      <h1>{esc(pd['h1'])}</h1>
+      <p class="lede">{esc(pd['lede'])}</p>
+      <dl class="facts">
+        <div><dt>Dates</dt><dd>{esc(m['dates'])}</dd></div>
+        <div><dt>Where</dt><dd>{esc(m['where'])}</dd></div>{neighbor("Before", k - 1)}{neighbor("After", k + 1)}
+      </dl>
+    </header>
+
+    <section class="band">
+      <h2>History</h2>
+{history}
+    </section>
+
+    <section class="band">
+      <h2>How to recognize it</h2>
+      <p>{esc(m['look'])}</p>
+      <p><strong>Key artists:</strong> {key_artists}.</p>
+    </section>
+
+    <section class="artist-works">
+      <h2>{n} {esc(pd['works_label'])}</h2>
+      <p class="era-intro">In date order, with who made each one and where it is today. Every one can be downloaded free as an iPhone or Mac wallpaper.</p>
+      <div class="works-grid">
+{cards}
+      </div>
+      <p class="no-ex">The {esc(pd['works_label'])} on this page are by {artists_line}.</p>
+    </section>
+
+    <section class="band">
+      <h2>Questions</h2>
+{faq_block(pd['faq'])}
+    </section>
+
+{DAILY_BAND}
+
+    <section class="band">
+      <h2>More art movements</h2>
+      <ul class="related">
+{related_html}
+      </ul>
+    </section>
+  </main>
+
+{FOOTER}"""
+
+
+def write_periods(cat):
+    """Writes art-movements/<slug>.html for each period page and returns their sitemap paths."""
+    picks = {pd["slug"]: select_period_works(pd, cat) for pd in pe.PERIODS}
+    ids = sorted({p["id"] for ws in picks.values() for p, _ in ws})
+    with ThreadPoolExecutor(12) as pool:
+        list(pool.map(lambda i: painting_thumb(cat[i]), ids))
+    os.makedirs(os.path.join(ROOT, MOVEMENTS_SLUG), exist_ok=True)
+    paths = []
+    for pd in pe.PERIODS:
+        with open(os.path.join(ROOT, MOVEMENTS_SLUG, pd["slug"] + ".html"), "w") as f:
+            f.write(period_html(pd, cat, picks[pd["slug"]]))
+        paths.append(f"{MOVEMENTS_SLUG}/{pd['slug']}")
+    print(f"wrote {MOVEMENTS_SLUG}/ ({len(pe.PERIODS)} period pages, {sum(len(w) for w in picks.values())} works)")
+    return paths
+
+
 def write_artists_and_museums(cat):
     """Writes artists/ and museums/ and returns their sitemap paths."""
     picks = {a["slug"]: select_works(a, cat) for a in ar.ARTISTS}
@@ -1360,6 +1556,10 @@ def main():
     missing += [x[0] for m in am.MOVEMENTS for x in m["ex"] if x[0] not in cat]
     missing += [i for a in ar.ARTISTS for i in a["must"] if i not in cat]
     missing += [i for pg in mu.PAGES.values() for i, _ in pg["highlights"] if i not in cat]
+    missing += [i for pd in pe.PERIODS for i in pd["must"] if i not in cat]
+    unknown = [pd["slug"] for pd in pe.PERIODS if pd["slug"] not in {m["slug"] for m in am.MOVEMENTS}]
+    if unknown:
+        sys.exit(f"Period pages with no movement in art_movements.py: {unknown}")
     if missing:
         sys.exit(f"Not in catalog: {missing}")
     for pg in PAGES:
@@ -1373,6 +1573,7 @@ def main():
         f.write(movements_html(cat))
     print("wrote", MOVEMENTS_SLUG + ".html")
     extra = write_artists_and_museums(cat)
+    extra += write_periods(cat)
     write_sitemap([pg["slug"] for pg in PAGES], extra)
     print("wrote sitemap.xml")
 
